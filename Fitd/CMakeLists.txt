@@ -1,5 +1,3 @@
-cmake_minimum_required(VERSION 3.9)
-
 include_directories(
     "."
     "${CMAKE_SOURCE_DIR}/FitdLib"

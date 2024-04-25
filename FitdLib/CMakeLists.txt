@@ -1,23 +1,19 @@
-cmake_minimum_required(VERSION 3.9)
-
-include_directories(
-    "."
-    "${THIRD_PARTY}/SDL/include"
-    "${THIRD_PARTY}/imgui"
-    "${THIRD_PARTY}/soloud.cmake/soloud/include"
-    "${THIRD_PARTY}/bgfx.cmake/bgfx/include"
-    "${THIRD_PARTY}/bgfx.cmake/bx/include"
-    "${THIRD_PARTY}/bgfx.cmake/bgfx/3rdparty"
-    "${THIRD_PARTY}/bgfx.cmake/bimg/include"
-)
-
-IF(${MSVC})
-    include_directories("${THIRD_PARTY}/bgfx.cmake/bx/include/compat/msvc")
-endif()
+include(FetchContent)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(SDL_SHARED TRUE CACHE BOOL "Build a SDL shared library (if available)")
+set(SDL_STATIC TRUE CACHE BOOL "Build a SDL static library (if available)")
+
+FetchContent_Declare(bgfx GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git GIT_TAG master)
+FetchContent_Declare(imgui GIT_REPOSITORY https://github.com/ocornut/imgui.git GIT_TAG master)
+FetchContent_Declare(SDL GIT_REPOSITORY https://github.com/libsdl-org/SDL GIT_TAG main)
+
+FetchContent_MakeAvailable(bgfx)
+FetchContent_MakeAvailable(imgui)
+FetchContent_MakeAvailable(SDL)
 
 file(GLOB_RECURSE SRC_ROOT
     "*.cpp"
@@ -27,12 +23,6 @@ file(GLOB_RECURSE SRC_ROOT
 set(SOURCES
  ${SOURCES}
  ${SRC_ROOT}
- "${THIRD_PARTY}/imgui/imgui.cpp"
- "${THIRD_PARTY}/imgui/imgui.h"
- "${THIRD_PARTY}/imgui/imgui_draw.cpp"
- "${THIRD_PARTY}/imgui/imgui_tables.cpp"
- "${THIRD_PARTY}/imgui/imgui_widgets.cpp"
- "${THIRD_PARTY}/imgui/backends/imgui_impl_sdl.cpp"
 )
 
 function(assign_source_group)
@@ -49,17 +39,26 @@ function(assign_source_group)
 endfunction(assign_source_group)
 
 macro(addShaderProgramPermutation vsname psname varyingname platform api profileVS profilePS)
-    shaderc(FILE shaders/${vsname}.sc BIN2C ${vsname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.h VERTEX ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profileVS})
-    shaderc(FILE shaders/${psname}.sc BIN2C ${psname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.h FRAGMENT ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profilePS})
-    #shaderc(FILE shaders/${vsname}.sc BIN2C ${vsname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.debug.h DEBUG VERTEX ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profileVS})
-    #shaderc(FILE shaders/${psname}.sc BIN2C ${psname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.debug.h DEBUG FRAGMENT ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profilePS})
-    set(SOURCES
-        ${SOURCES}
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.h
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.h
-        #${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.debug.h
-        #${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.debug.h
+    bgfx_compile_shader_to_header(
+        TYPE VERTEX
+        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${vsname}.sc
+        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${varyingname}.sc
+        OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated
+        INCLUDE_DIRS ${BGFX_DIR}/src
     )
+
+    bgfx_compile_shader_to_header(
+        TYPE FRAGMENT
+        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${psname}.sc
+        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${varyingname}.sc
+        OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated
+        INCLUDE_DIRS ${BGFX_DIR}/src
+    )
+
+#shaderc(FILE shaders/${vsname}.sc BIN2C ${vsname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.h VERTEX ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profileVS})
+#    shaderc(FILE shaders/${psname}.sc BIN2C ${psname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.h FRAGMENT ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profilePS})
+    #shaderc(FILE shaders/${vsname}.sc BIN2C ${vsname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${vsname}_${api}.debug.h DEBUG VERTEX ${platform} VARYINGDEF shaders/${varyingname}.sc  PROFILE ${profileVS})
+    #shaderc(FILE shaders/${psname}.sc BIN2C ${psname}_${api} OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated/${psname}_${api}.debug.h DEBUG FRAGMENT ${platform} VARYINGDEF shaders/${varyingname}.sc INCLUDES ${BGFX_DIR}/src PROFILE ${profilePS})
 endmacro()
 
 macro(addShaderProgram vsname psname varyingname)
@@ -103,3 +102,5 @@ addShaderProgram(ramp_vs ramp_ps ramp.varying.def)
 assign_source_group(${SOURCES})
 
 add_library (FitdLib ${SOURCES})
+target_include_directories(FitdLib PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/shaders/generated)
+target_link_libraries(FitdLib bgfx imgui SDL3::SDL3)
