@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(iconfontheader)
 FetchContent_MakeAvailable(plog)
 FetchContent_MakeAvailable(SDL)
 
-add_subdirectory( ThirdParty/imgui )
+add_subdirectory( deps/imgui )
 add_subdirectory( shaderLib )
 add_subdirectory( FitdLib )
 add_subdirectory( Fitd )

@@ -17,8 +17,8 @@ add_library(imgui
   ${SRC}/imgui_tables.cpp
   ${SRC}/imgui_widgets.cpp
 
-  ${SRC}/backends/imgui_impl_SDL3.h
-  ${SRC}/backends/imgui_impl_SDL3.cpp
+  ${SRC}/backends/imgui_impl_sdl3.h
+  ${SRC}/backends/imgui_impl_sdl3.cpp
 )
 
 target_link_libraries(imgui PUBLIC SDL3::SDL3)

@@ -2,38 +2,38 @@
 
 enum gameTypeEnum g_gameId;
 
-char* currentFoundBody;
+char *currentFoundBody;
 int currentFoundBodyIdx;
 int statusVar1;
 
-hqrEntryStruct* HQ_Memory;
+hqrEntryStruct *HQ_Memory;
 
 int videoMode;
 int musicConfigured;
 int musicEnabled;
 
-char* aux;
-char* aux2;
+char *aux;
+char *aux2;
 std::vector<std::vector<s16>> bufferAnim;
 
-char* logicalScreen;
+char *logicalScreen;
 
 int screenBufferSize;
 int unkScreenVar2;
 
 std::vector<s16> CVars;
 
-char* priority;
+char *priority;
 
-char* fontData;
+char *fontData;
 
-char* aitdBoxGfx;
+char *aitdBoxGfx;
 
-unsigned char currentGamePalette[256*3];
+unsigned char currentGamePalette[256 * 3];
 
-//OSystem osystem;
+// OSystem osystem;
 
-char rgbaBuffer[320*200*4];
+char rgbaBuffer[320 * 200 * 4];
 
 unsigned int timer;
 unsigned int timeGlobal;
@@ -43,8 +43,8 @@ int currentMenuTop;
 int currentMenuRight;
 int currentMenuBottom;
 
-textEntryStruct* tabTextes;
-u8* systemTextes;
+textEntryStruct *tabTextes;
+u8 *systemTextes;
 
 char JoyD = 0;
 char click = 0;
@@ -53,8 +53,7 @@ char localKey;
 char localJoyD;
 char localClick;
 
-const std::vector<std::string> languageNameTable =
-{
+const std::vector<std::string> languageNameTable = {
     "FRANCAIS",
     "ITALIANO",
     "ENGLISH",
@@ -68,13 +67,11 @@ regularTextEntryStruct textTable[NUM_MAX_TEXT];
 
 int turnPageFlag;
 
-int hqrKeyGen = 0;
-
-char* screenSm1;
-char* screenSm2;
-char* screenSm3;
-char* screenSm4;
-char* screenSm5;
+char *screenSm1;
+char *screenSm2;
+char *screenSm3;
+char *screenSm4;
+char *screenSm5;
 
 tObject objectTable[NUM_MAX_OBJECT];
 
@@ -82,17 +79,17 @@ s16 currentWorldTarget;
 
 int fileSize;
 
-hqrEntryStruct* listBody;
-hqrEntryStruct* listAnim;
-hqrEntryStruct* listLife;
-hqrEntryStruct* listTrack;
-hqrEntryStruct* listMatrix;
+hqrEntryStruct *listBody;
+hqrEntryStruct *listAnim;
+hqrEntryStruct *listLife;
+hqrEntryStruct *listTrack;
+hqrEntryStruct *listMatrix;
 
 s16 maxObjects;
 
 std::vector<tWorldObject> worldObjects;
 
-s16* vars;
+s16 *vars;
 
 int varSize;
 
@@ -118,25 +115,25 @@ int soundVar1;
 int soundVar2;
 s16 statusScreenAllowed;
 
-char* g_currentFloorRoomRawData = NULL;
-char* g_currentFloorCameraRawData = NULL;
+char *g_currentFloorRoomRawData = NULL;
+char *g_currentFloorCameraRawData = NULL;
 
 int changeFloor;
 s16 currentCamera;
 s16 g_currentFloor;
 int needChangeRoom;
 
-char* cameraPtr;
-roomDefStruct* pCurrentRoomData;
+char *cameraPtr;
+roomDefStruct *pCurrentRoomData;
 
 s16 currentRoom;
 int flagInitView;
 int numCameraInRoom;
 int numCameraZone;
-char* cameraZoneData;
+char *cameraZoneData;
 int numRoomZone;
-char* roomZoneData;
-char* room_PtrCamera[NUM_MAX_CAMERA_IN_ROOM];
+char *roomZoneData;
+char *room_PtrCamera[NUM_MAX_CAMERA_IN_ROOM];
 int startGameVar1;
 
 int transformX;
@@ -167,26 +164,26 @@ char currentCameraVisibilityList[30];
 int actorTurnedToObj = 0;
 
 int currentProcessedActorIdx;
-tObject* currentProcessedActorPtr;
+tObject *currentProcessedActorPtr;
 
 int currentLifeActorIdx;
-tObject* currentLifeActorPtr;
+tObject *currentLifeActorPtr;
 int currentLifeNum;
 
-char* currentLifePtr;
+char *currentLifePtr;
 
-s16 readNextArgument(const char* name)
+s16 readNextArgument (const char *name)
 {
-    s16 value = *(s16*)(currentLifePtr);
-    currentLifePtr+=2;
+    s16 value = *(s16 *)(currentLifePtr);
+    currentLifePtr += 2;
 
     if (name)
     {
-        appendFormated("%s:%d, ",name, value);
+        appendFormated ("%s:%d, ", name, value);
     }
     else
     {
-        appendFormated("%d, ", value);
+        appendFormated ("%d, ", value);
     }
 
     return value;
@@ -217,9 +214,9 @@ int animStepX;
 int animStepZ;
 int animStepY;
 
-char* animVar1;
-char* animVar3;
-char* animVar4;
+char *animVar1;
+char *animVar3;
+char *animVar4;
 
 s16 newFloor;
 
@@ -230,9 +227,9 @@ char cameraBuffer2[256];
 char cameraBuffer3[400];
 char cameraBuffer4[400];
 
-char* cameraBufferPtr = cameraBuffer;
-char* cameraBuffer2Ptr = cameraBuffer2;
-char* cameraBuffer3Ptr = cameraBuffer3;
+char *cameraBufferPtr = cameraBuffer;
+char *cameraBuffer2Ptr = cameraBuffer2;
+char *cameraBuffer3Ptr = cameraBuffer3;
 
 int overlaySize1;
 int overlaySize2;
@@ -241,25 +238,23 @@ int bgOverlayVar1;
 
 s16 newRoom;
 
-
-
 s16 shakeVar1;
 s16 shakingAmplitude;
 unsigned int timerFreeze1;
 
-hardColStruct* hardColTable[10];
+hardColStruct *hardColTable[10];
 
 s16 hardColStepX;
 s16 hardColStepZ;
 
 ZVStruct hardClip;
 
-const char* listBodySelect[] = {
+const char *listBodySelect[] = {
     "LISTBODY",
     "LISTBOD2",
 };
 
-const char* listAnimSelect[] = {
+const char *listAnimSelect[] = {
     "LISTANIM",
     "LISTANI2",
 };
@@ -275,10 +270,10 @@ int clipTop = 0;
 int clipRight = 319;
 int clipBottom = 119;
 
-unsigned char* g_MaskPtr = NULL;
+unsigned char *g_MaskPtr = NULL;
 
-hqrEntryStruct* listMus;
-hqrEntryStruct* listSamp;
+hqrEntryStruct *listMus;
+hqrEntryStruct *listSamp;
 
 #if defined(FITD_DEBUGGER)
 backgroundModeEnum backgroundMode = backgroundModeEnum_2D;

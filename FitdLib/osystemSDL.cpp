@@ -87,26 +87,6 @@ bool bFirst = true;
 
 int FitdInit (int argc, char *argv[])
 {
-    unsigned int flags = 0;
-    flags |= SDL_WINDOW_RESIZABLE;
-    flags |= SDL_WINDOW_HIGH_PIXEL_DENSITY;
-
-    int resolution[2] = {1280, 960};
-
-    gWindowBGFX = SDL_CreateWindow ("FITD", resolution[0], resolution[1], flags);
-
-    char version[256];
-
-    getVersion (version);
-
-    printf (version);
-
-    detectGame ();
-
-    createBgfxInitParams ();
-
-    SDL_CreateThread (FitdMain, "FitdMainThread", NULL);
-
     unsigned long int t_start = SDL_GetTicks ();
     unsigned long int t_lastUpdate = t_start;
 
@@ -231,20 +211,6 @@ void osystem_endOfFrame ()
 
     SDL_PostSemaphore (endOfRender);
     // SDL_SemPost(emptyCount);
-}
-
-int fileExists (const char *name)
-{
-    FILE *fHandle;
-
-    fHandle = fopen (name, "rb");
-
-    if (fHandle)
-    {
-        fclose (fHandle);
-        return 1;
-    }
-    return 0;
 }
 
 void osystem_init () // that's the constructor of the system dependent

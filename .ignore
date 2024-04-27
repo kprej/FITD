@@ -1,1 +1,4 @@
 build
+_deps
+CMakeFiles
+compile_commands.json

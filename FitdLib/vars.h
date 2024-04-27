@@ -1,8 +1,8 @@
-#pragma  once
+#pragma once
 
 #include "osystem.h"
 
-extern char* currentFoundBody;
+extern char *currentFoundBody;
 extern int currentFoundBodyIdx;
 extern int statusVar1;
 
@@ -29,7 +29,7 @@ typedef struct point3dStruct point3dStruct;
 struct textEntryStruct
 {
     s16 index;
-    u8* textPtr;
+    u8 *textPtr;
     s16 width;
 };
 
@@ -37,7 +37,7 @@ typedef struct textEntryStruct textEntryStruct;
 
 struct messageStruct
 {
-    textEntryStruct* string;
+    textEntryStruct *string;
     s16 time;
 };
 
@@ -45,7 +45,7 @@ typedef struct messageStruct messageStruct;
 
 struct saveEntry
 {
-    void* ptr;
+    void *ptr;
     unsigned int size;
 };
 
@@ -53,7 +53,7 @@ typedef struct saveEntry saveEntry;
 
 struct regularTextEntryStruct
 {
-    u8* textPtr;
+    u8 *textPtr;
     s16 width;
 };
 
@@ -64,20 +64,10 @@ struct hqrSubEntryStruct
     s16 key;
     s16 size;
     unsigned int lastTimeUsed;
-    char* ptr;
+    char *ptr;
 };
 
 typedef struct hqrSubEntryStruct hqrSubEntryStruct;
-
-struct hqrEntryStruct
-{
-    char string[10];
-    u16 maxFreeData;
-    u16 sizeFreeData;
-    u16 numMaxEntry;
-    u16 numUsedEntry;
-    hqrSubEntryStruct* entries;
-};
 
 typedef struct hqrEntryStruct hqrEntryStruct;
 
@@ -105,17 +95,17 @@ typedef struct interpolatedValue interpolatedValue;
 
 enum actorFlags
 {
-    AF_ANIMATED     = 0x0001,
+    AF_ANIMATED = 0x0001,
     // 0x02
-    AF_DRAWABLE     = 0x0004,
-    AF_BOXIFY       = 0x0008,
-    AF_MOVABLE      = 0x0010,
-    AF_SPECIAL      = 0x0020,
-    AF_TRIGGER      = 0x0040,
-    AF_FOUNDABLE    = 0x0080,
-    AF_FALLABLE     = 0x0100,
+    AF_DRAWABLE = 0x0004,
+    AF_BOXIFY = 0x0008,
+    AF_MOVABLE = 0x0010,
+    AF_SPECIAL = 0x0020,
+    AF_TRIGGER = 0x0040,
+    AF_FOUNDABLE = 0x0080,
+    AF_FALLABLE = 0x0100,
 
-    AF_MASK         = AF_ANIMATED + AF_MOVABLE + AF_TRIGGER + AF_FOUNDABLE + AF_FALLABLE,
+    AF_MASK = AF_ANIMATED + AF_MOVABLE + AF_TRIGGER + AF_FOUNDABLE + AF_FALLABLE,
 };
 
 struct tObject // used to read data from file too
@@ -163,9 +153,9 @@ struct tObject // used to read data from file too
     s16 stepY;
     s16 stepZ;
 
-	s16 animNegX;
-	s16 animNegY;
-	s16 animNegZ;
+    s16 animNegX;
+    s16 animNegY;
+    s16 animNegZ;
 
     interpolatedValue YHandler;
     s16 falling;
@@ -245,50 +235,50 @@ typedef struct boxStruct boxStruct;
 struct roomDefStruct
 {
     s16 offsetToCameraDef; // 0
-    s16 offsetToPosDef; // 2
-    s16 worldX;//4
-    s16 worldY;//6
-    s16 worldZ;//8
-    s16 numCameraInRoom;//0xA
+    s16 offsetToPosDef;    // 2
+    s16 worldX;            // 4
+    s16 worldY;            // 6
+    s16 worldZ;            // 8
+    s16 numCameraInRoom;   // 0xA
 };
 
 typedef struct roomDefStruct roomDefStruct;
 
-extern hqrEntryStruct* HQ_Memory;
+extern hqrEntryStruct *HQ_Memory;
 
-extern hqrEntryStruct* listMus;
-extern hqrEntryStruct* listSamp;
+extern hqrEntryStruct *listMus;
+extern hqrEntryStruct *listSamp;
 
 extern int videoMode;
 extern int musicConfigured;
 extern int musicEnabled;
 
-extern char* aux;
-extern char* aux2;
+extern char *aux;
+extern char *aux2;
 
-#define NB_BUFFER_ANIM 25 // AITD1 was  20
-#define SIZE_BUFFER_ANIM (8*41) // AITD1 was 4*31
+#define NB_BUFFER_ANIM 25         // AITD1 was  20
+#define SIZE_BUFFER_ANIM (8 * 41) // AITD1 was 4*31
 
 extern std::vector<std::vector<s16>> bufferAnim;
 
-extern char* logicalScreen;
+extern char *logicalScreen;
 
 extern int screenBufferSize;
 extern int unkScreenVar2;
 
 extern std::vector<s16> CVars;
 
-extern char* priority;
+extern char *priority;
 
-extern char* fontData;
+extern char *fontData;
 
-extern char* aitdBoxGfx;
+extern char *aitdBoxGfx;
 
 extern unsigned char currentGamePalette[0x300];
 
-//extern OSystem osystem;
-extern unsigned char frontBuffer[320*200];
-extern char rgbaBuffer[320*200*4];
+// extern OSystem osystem;
+extern unsigned char frontBuffer[320 * 200];
+extern char rgbaBuffer[320 * 200 * 4];
 
 extern unsigned int timer;
 extern unsigned int timeGlobal;
@@ -298,10 +288,11 @@ extern int currentMenuTop;
 extern int currentMenuRight;
 extern int currentMenuBottom;
 
-extern textEntryStruct* tabTextes;
-extern u8* systemTextes;
+extern textEntryStruct *tabTextes;
+extern u8 *systemTextes;
 
-extern "C" {
+extern "C"
+{
     extern char JoyD;
 };
 extern char click;
@@ -319,11 +310,11 @@ extern int turnPageFlag;
 
 extern int hqrKeyGen;
 
-extern char* screenSm1;
-extern char* screenSm2;
-extern char* screenSm3;
-extern char* screenSm4;
-extern char* screenSm5;
+extern char *screenSm1;
+extern char *screenSm2;
+extern char *screenSm3;
+extern char *screenSm4;
+extern char *screenSm5;
 
 extern tObject objectTable[NUM_MAX_OBJECT];
 
@@ -331,17 +322,17 @@ extern s16 currentWorldTarget;
 
 extern int fileSize;
 
-extern hqrEntryStruct* listBody;
-extern hqrEntryStruct* listAnim;
-extern hqrEntryStruct* listLife;
-extern hqrEntryStruct* listTrack;
-extern hqrEntryStruct* listMatrix;
+extern hqrEntryStruct *listBody;
+extern hqrEntryStruct *listAnim;
+extern hqrEntryStruct *listLife;
+extern hqrEntryStruct *listTrack;
+extern hqrEntryStruct *listMatrix;
 
 extern s16 maxObjects;
 
 extern std::vector<tWorldObject> worldObjects; // may be less
 
-extern s16* vars;
+extern s16 *vars;
 
 extern int varSize;
 
@@ -367,24 +358,24 @@ extern int soundVar1;
 extern int soundVar2;
 extern s16 statusScreenAllowed;
 
-extern char* g_currentFloorRoomRawData;
-extern char* g_currentFloorCameraRawData;
+extern char *g_currentFloorRoomRawData;
+extern char *g_currentFloorCameraRawData;
 
 extern int changeFloor;
 extern s16 currentCamera;
 extern s16 g_currentFloor;
 extern int needChangeRoom;
 
-extern char* cameraPtr;
-extern roomDefStruct* pCurrentRoomData;
+extern char *cameraPtr;
+extern roomDefStruct *pCurrentRoomData;
 extern s16 currentRoom;
 extern int flagInitView;
 extern int numCameraInRoom;
 extern int numCameraZone;
-extern char* cameraZoneData;
+extern char *cameraZoneData;
 extern int numRoomZone;
-extern char* roomZoneData;
-extern char* room_PtrCamera[NUM_MAX_CAMERA_IN_ROOM];
+extern char *roomZoneData;
+extern char *room_PtrCamera[NUM_MAX_CAMERA_IN_ROOM];
 extern int startGameVar1;
 
 extern int transformX;
@@ -415,15 +406,15 @@ extern char currentCameraVisibilityList[30];
 extern int actorTurnedToObj;
 
 extern int currentProcessedActorIdx;
-extern tObject* currentProcessedActorPtr;
+extern tObject *currentProcessedActorPtr;
 
 extern int currentLifeActorIdx;
-extern tObject* currentLifeActorPtr;
+extern tObject *currentLifeActorPtr;
 extern int currentLifeNum;
 
-extern char* currentLifePtr;
+extern char *currentLifePtr;
 
-s16 readNextArgument(const char* name = NULL);
+s16 readNextArgument (const char *name = NULL);
 
 extern bool cameraBackgroundChanged;
 extern int flagRedraw;
@@ -447,9 +438,9 @@ extern int animMoveZ;
 extern int animStepZ;
 extern int animStepX;
 extern int animStepY;
-extern char* animVar1;
-extern char* animVar3;
-extern char* animVar4;
+extern char *animVar1;
+extern char *animVar3;
+extern char *animVar4;
 
 extern s16 newFloor;
 
@@ -460,9 +451,9 @@ extern char cameraBuffer2[256];
 extern char cameraBuffer3[400];
 extern char cameraBuffer4[400];
 
-extern char* cameraBufferPtr;
-extern char* cameraBuffer2Ptr;
-extern char* cameraBuffer3Ptr;
+extern char *cameraBufferPtr;
+extern char *cameraBuffer2Ptr;
+extern char *cameraBuffer3Ptr;
 
 extern int overlaySize1;
 extern int overlaySize2;
@@ -471,14 +462,14 @@ extern int bgOverlayVar1;
 
 extern s16 newRoom;
 
-extern const char* listBodySelect[];
-extern const char* listAnimSelect[];
+extern const char *listBodySelect[];
+extern const char *listAnimSelect[];
 
 extern s16 shakeVar1;
 extern s16 shakingAmplitude;
 extern unsigned int timerFreeze1;
 
-extern hardColStruct* hardColTable[10];
+extern hardColStruct *hardColTable[10];
 
 extern s16 hardColStepX;
 extern s16 hardColStepZ;
@@ -496,7 +487,7 @@ extern int clipTop;
 extern int clipRight;
 extern int clipBottom;
 
-extern unsigned char* g_MaskPtr;
+extern unsigned char *g_MaskPtr;
 
 #if defined(FITD_DEBUGGER)
 enum backgroundModeEnum
@@ -512,18 +503,18 @@ extern backgroundModeEnum backgroundMode;
 
 struct sGroupState
 {
-    s16 m_type; // 8
-    s16 m_delta[3]; // A
+    s16 m_type;           // 8
+    s16 m_delta[3];       // A
     s16 m_rotateDelta[3]; // 10 (AITD2+) if Info_optimise
 };
 
 struct sGroup
 {
-    s16 m_start; // 0
-    s16 m_numVertices; // 2
+    s16 m_start;        // 0
+    s16 m_numVertices;  // 2
     s16 m_baseVertices; // 4
-    s8 m_orgGroup; // 6
-    s8 m_numGroup; // 7
+    s8 m_orgGroup;      // 6
+    s8 m_numGroup;      // 7
     sGroupState m_state;
 };
 
@@ -560,10 +551,9 @@ struct sExtraBody
 // scratch buffer:
 // 4: u16 timer
 
-
 struct sBody
 {
-    void* m_raw;
+    void *m_raw;
 
     u16 m_flags;
     ZVStruct m_zv;
@@ -573,7 +563,7 @@ struct sBody
     std::vector<sGroup> m_groups;
     std::vector<sPrimitive> m_primitives;
 
-    void sync();
+    void sync ();
 };
 
 struct sFrame
@@ -585,10 +575,9 @@ struct sFrame
 
 struct sAnimation
 {
-    void* m_raw;
+    void *m_raw;
 
     u16 m_numFrames;
     u16 m_numGroups;
     std::vector<sFrame> m_frames;
 };
-

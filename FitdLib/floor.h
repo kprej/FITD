@@ -1,11 +1,10 @@
-#ifndef _FLOOR_H_
-#define _FLOOR_H_
+#pragma once
 
-extern std::vector<cameraDataStruct> g_currentFloorCameraData;
-extern u32 g_currentFloorRoomRawDataSize;
-extern u32 g_currentFloorNumCamera;
+#include "camera.h"
 
-void loadFloor(int floorNumber);
+#include <vector>
 
-#endif
-
+extern std::vector<cameraData_t> g_currentFloorCameraData;
+extern uint32_t g_currentFloorRoomRawDataSize;
+extern uint32_t g_currentFloorNumCamera;
+void loadFloor (int floorNumber);
