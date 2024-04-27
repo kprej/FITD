@@ -8,7 +8,7 @@ extern float fov;
 
 extern bool debuggerVar_debugMenuDisplayed;
 
-void handleKeyDown(SDL_Event& event)
+void handleKeyDown (SDL_Event &event)
 {
     switch (event.key.keysym.scancode)
     {
@@ -18,7 +18,7 @@ void handleKeyDown(SDL_Event& event)
     }
 }
 
-void readKeyboard(void)
+void readKeyboard (void)
 {
     SDL_Event event;
     int size;
@@ -29,22 +29,23 @@ void readKeyboard(void)
     click = 0;
     key = 0;
 
-    while (SDL_PollEvent(&event)) {
+    while (SDL_PollEvent (&event))
+    {
 
-        switch (event.type) {
-        case SDL_KEYDOWN:
-            handleKeyDown(event);
+        switch (event.type)
+        {
+        case SDL_EVENT_KEY_DOWN:
+            handleKeyDown (event);
             break;
-        case SDL_QUIT:
-            cleanupAndExit();
+        case SDL_EVENT_QUIT:
+            cleanupAndExit ();
             break;
         }
-
     }
 
     debuggerVar_fastForward = false;
 
-    keyboard = SDL_GetKeyboardState(&size);
+    keyboard = SDL_GetKeyboardState (&size);
 
     for (j = 0; j < size; j++)
     {
@@ -128,7 +129,7 @@ void readKeyboard(void)
                 debuggerVar_noHardClip = !debuggerVar_noHardClip;
                 break;
             case SDL_SCANCODE_D:
-                debugger_enterMainDebug();
+                debugger_enterMainDebug ();
                 break;
             case SDL_SCANCODE_B:
                 backgroundMode = backgroundModeEnum_3D;
@@ -139,7 +140,6 @@ void readKeyboard(void)
             case SDL_SCANCODE_F:
                 debuggerVar_fastForward = true;
                 break;
-
 
 #endif
             }

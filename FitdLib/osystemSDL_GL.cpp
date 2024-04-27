@@ -9,20 +9,80 @@ email                : yaz0r@yaz0r.net
 ***************************************************************************/
 
 /***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************/
+ * *
+ *
 
+ *
+
+ * * *
+
+
+
+ * * * *
+ * This
+
+ * * program is free software; you can redistribute it and/or
+
+ * *
+ * modify *
+
+
+ * * *
+ * it
+
+
+ * * * under the
+
+ * * terms of the GNU General Public
+
+ * *
+ * License as
+ * published
+ * by  *
+
+ * * the
+
+
+ * * * Free Software
+ *
+ *
+ * Foundation;
+ *
+ * either version 2
+ * of the
+ * License, or *
+ *
+ * (at
+
+ * * your
+ *
+ * option) any
+ * later
+
+
+ * * * version. *
+
+ *
+ * * *
+
+
+ *
+ * *
+
+ * *
+ *
+ *
+ *
+ *
+ *
+ *
+ * ***************************************************************************/
+
+#include "embeddedShaders.h"
 #include "osystem.h"
+#include <array>
 #include <bgfx/bgfx.h>
 #include <bx/platform.h>
-#include "shaders/embeddedShaders.h"
-#include "imguiBGFX.h"
-#include <array>
 #include <string>
 
 unsigned int gameViewId = 1;
@@ -39,7 +99,7 @@ char backBuffer[512 * 256 * 3];
 
 unsigned int ditherTexture = 0;
 
-unsigned int    debugFontTexture = 0;
+unsigned int debugFontTexture = 0;
 
 struct maskStruct
 {
@@ -53,7 +113,7 @@ struct maskStruct
 
 std::vector<std::vector<maskStruct>> maskTextures; // [room][mask]
 
-//vertex buffers for rendering
+// vertex buffers for rendering
 struct polyVertex
 {
     float X;
@@ -83,10 +143,10 @@ struct pointSpriteVertex
     unsigned char A;
 };
 
-#define NUM_MAX_FLAT_VERTICES 5000*3
-#define NUM_MAX_NOISE_VERTICES 2000*3
-#define NUM_MAX_TRANSPARENT_VERTICES 1000*2
-#define NUM_MAX_RAMP_VERTICES 3000*3
+#define NUM_MAX_FLAT_VERTICES 5000 * 3
+#define NUM_MAX_NOISE_VERTICES 2000 * 3
+#define NUM_MAX_TRANSPARENT_VERTICES 1000 * 2
+#define NUM_MAX_RAMP_VERTICES 3000 * 3
 #define NUM_MAX_POINT_SPRITES 1000
 
 std::array<polyVertex, NUM_MAX_FLAT_VERTICES> flatVertices;
@@ -101,7 +161,7 @@ int numUsedTransparentVertices = 0;
 int numUsedRampVertices = 0;
 int numUsedPointSprites = 0;
 
-//static unsigned long int zoom = 0;
+// static unsigned long int zoom = 0;
 
 float nearVal = 100;
 float farVal = 100000;
@@ -110,17 +170,17 @@ float fov = 0;
 
 char RGB_Pal[256 * 4];
 
-unsigned int    backTexture;
+unsigned int backTexture;
 
 //
-void checkGL()
+void checkGL ()
 {
 #ifdef DEBUG
-    volatile GLenum error = glGetError();
+    volatile GLenum error = glGetError ();
 
-    //while (error != GL_NO_ERROR)
+    // while (error != GL_NO_ERROR)
     {
-        //assert(0);
+        // assert(0);
     }
 #endif
 }
@@ -128,11 +188,11 @@ void checkGL()
 int g_screenWidth = 0;
 int g_screenHeight = 0;
 
-void osystem_preinigGL()
+void osystem_preinigGL ()
 {
 }
 
-void osystem_initGL(int screenWidth, int screenHeight)
+void osystem_initGL (int screenWidth, int screenHeight)
 {
 #if 0
 #ifndef __APPLE__
@@ -213,16 +273,17 @@ void osystem_initGL(int screenWidth, int screenHeight)
 #endif
 }
 
-void osystem_setPalette(u8* palette)
+void osystem_setPalette (u8 *palette)
 {
-    memcpy(RGB_Pal, palette, 256 * 3);
+    memcpy (RGB_Pal, palette, 256 * 3);
 
-    bgfx::updateTexture2D(g_paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy(RGB_Pal, 256 * 3));
+    bgfx::updateTexture2D (
+        g_paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy (RGB_Pal, 256 * 3));
 }
 
-void osystem_getPalette(unsigned char* palette)
+void osystem_getPalette (unsigned char *palette)
 {
-    memcpy(palette, RGB_Pal, 256 * 3);
+    memcpy (palette, RGB_Pal, 256 * 3);
 }
 
 struct s_vertexData
@@ -233,93 +294,92 @@ struct s_vertexData
 };
 s_vertexData gVertexArray[1024 * 1024];
 
-bgfx::ShaderHandle loadBgfxShader(const std::string& filename)
+bgfx::ShaderHandle loadBgfxShader (const std::string &filename)
 {
     std::vector<u8> memBlob;
-    FILE* fHandle = fopen(filename.c_str(), "rb");
+    FILE *fHandle = fopen (filename.c_str (), "rb");
     if (fHandle == nullptr)
         return BGFX_INVALID_HANDLE;
-    fseek(fHandle, 0, SEEK_END);
-    u32 size = ftell(fHandle);
-    fseek(fHandle, 0, SEEK_SET);
-    memBlob.resize(size);
-    fread(&memBlob[0], 1, size, fHandle);
-    fclose(fHandle);
+    fseek (fHandle, 0, SEEK_END);
+    u32 size = ftell (fHandle);
+    fseek (fHandle, 0, SEEK_SET);
+    memBlob.resize (size);
+    fread (&memBlob[0], 1, size, fHandle);
+    fclose (fHandle);
 
-    bgfx::ShaderHandle handle = bgfx::createShader(bgfx::copy(&memBlob[0], size));
-    bgfx::setName(handle, filename.c_str());
+    bgfx::ShaderHandle handle = bgfx::createShader (bgfx::copy (&memBlob[0], size));
+    bgfx::setName (handle, filename.c_str ());
 
     return handle;
 }
 
-bgfx::ProgramHandle getBackgroundShader()
+bgfx::ProgramHandle getBackgroundShader ()
 {
     static bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(programHandle))
+    if (!bgfx::isValid (programHandle))
     {
-        programHandle = loadBgfxProgram("background_vs", "background_ps");
+        programHandle = loadBgfxProgram ("background_vs", "background_ps");
     }
 
     return programHandle;
 }
 
-bgfx::ProgramHandle getMaskBackgroundShader()
+bgfx::ProgramHandle getMaskBackgroundShader ()
 {
     static bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(programHandle))
+    if (!bgfx::isValid (programHandle))
     {
-        programHandle = loadBgfxProgram("maskBackground_vs", "maskBackground_ps");
+        programHandle = loadBgfxProgram ("maskBackground_vs", "maskBackground_ps");
     }
 
     return programHandle;
 }
 
-bgfx::ProgramHandle getFlatShader()
+bgfx::ProgramHandle getFlatShader ()
 {
     static bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(programHandle))
+    if (!bgfx::isValid (programHandle))
     {
-        programHandle = loadBgfxProgram("flat_vs", "flat_ps");
+        programHandle = loadBgfxProgram ("flat_vs", "flat_ps");
     }
 
     return programHandle;
 }
 
-bgfx::ProgramHandle getNoiseShader()
+bgfx::ProgramHandle getNoiseShader ()
 {
     static bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(programHandle))
+    if (!bgfx::isValid (programHandle))
     {
-        programHandle = loadBgfxProgram("noise_vs", "noise_ps");
+        programHandle = loadBgfxProgram ("noise_vs", "noise_ps");
     }
 
     return programHandle;
 }
 
-bgfx::ProgramHandle getRampShader()
+bgfx::ProgramHandle getRampShader ()
 {
     static bgfx::ProgramHandle programHandle = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(programHandle))
+    if (!bgfx::isValid (programHandle))
     {
-        programHandle = loadBgfxProgram("ramp_vs", "ramp_ps");
+        programHandle = loadBgfxProgram ("ramp_vs", "ramp_ps");
     }
 
     return programHandle;
 }
 
-void osystem_drawBackground()
+void osystem_drawBackground ()
 {
     if (backgroundMode == backgroundModeEnum_2D)
     {
         bgfx::VertexLayout layout;
-        layout
-            .begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .end();
+        layout.begin ()
+            .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .end ();
 
         bgfx::TransientVertexBuffer transientBuffer;
-        bgfx::allocTransientVertexBuffer(&transientBuffer, 6, layout);
+        bgfx::allocTransientVertexBuffer (&transientBuffer, 6, layout);
 
         struct sVertice
         {
@@ -327,7 +387,7 @@ void osystem_drawBackground()
             float texcoord[2];
         };
 
-        sVertice* pVertices = (sVertice*)transientBuffer.data;
+        sVertice *pVertices = (sVertice *)transientBuffer.data;
 
         float quadVertices[6 * 3];
         float quadUV[6 * 2];
@@ -340,7 +400,7 @@ void osystem_drawBackground()
         pVertices->texcoord[1] = 0.f;
         pVertices++;
 
-        //2
+        // 2
         pVertices->position[0] = 320.f;
         pVertices->position[1] = 200.f;
         pVertices->position[2] = 1000.f;
@@ -348,7 +408,7 @@ void osystem_drawBackground()
         pVertices->texcoord[1] = 1.f;
         pVertices++;
 
-        //1
+        // 1
         pVertices->position[0] = 320.f;
         pVertices->position[1] = 0.f;
         pVertices->position[2] = 1000.f;
@@ -357,7 +417,7 @@ void osystem_drawBackground()
         pVertices++;
 
         //------------------------
-        //3
+        // 3
         pVertices->position[0] = 0.f;
         pVertices->position[1] = 0.f;
         pVertices->position[2] = 1000.f;
@@ -365,7 +425,7 @@ void osystem_drawBackground()
         pVertices->texcoord[1] = 0.f;
         pVertices++;
 
-        //4
+        // 4
         pVertices->position[0] = 0.f;
         pVertices->position[1] = 200.f;
         pVertices->position[2] = 1000.f;
@@ -373,7 +433,7 @@ void osystem_drawBackground()
         pVertices->texcoord[1] = 1.f;
         pVertices++;
 
-        //5
+        // 5
         pVertices->position[0] = 320.f;
         pVertices->position[1] = 200.f;
         pVertices->position[2] = 1000.f;
@@ -382,28 +442,25 @@ void osystem_drawBackground()
         pVertices++;
 
         static bgfx::UniformHandle backgroundTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(backgroundTextureUniform))
+        if (!bgfx::isValid (backgroundTextureUniform))
         {
-            backgroundTextureUniform = bgfx::createUniform("s_backgroundTexture", bgfx::UniformType::Sampler);
+            backgroundTextureUniform =
+                bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
         }
         static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(paletteTextureUniform))
+        if (!bgfx::isValid (paletteTextureUniform))
         {
-            paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+            paletteTextureUniform =
+                bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
         }
 
+        bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_MSAA);
 
-        bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-            | BGFX_STATE_MSAA
-        );
+        bgfx::setVertexBuffer (0, &transientBuffer);
 
-        bgfx::setVertexBuffer(0, &transientBuffer);
-
-        bgfx::setTexture(0, backgroundTextureUniform, g_backgroundTexture);
-        bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
-        bgfx::submit(gameViewId, getBackgroundShader());
-
-
+        bgfx::setTexture (0, backgroundTextureUniform, g_backgroundTexture);
+        bgfx::setTexture (1, paletteTextureUniform, g_paletteTexture);
+        bgfx::submit (gameViewId, getBackgroundShader ());
     }
 }
 
@@ -413,114 +470,132 @@ bgfx::FrameBufferHandle fieldModelInspector_FB = BGFX_INVALID_HANDLE;
 bgfx::TextureHandle fieldModelInspector_Texture = BGFX_INVALID_HANDLE;
 bgfx::TextureHandle fieldModelInspector_Depth = BGFX_INVALID_HANDLE;
 
-void initBgfxMainResources()
+void initBgfxMainResources ()
 {
     // create background texture
-    g_backgroundTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U);
-    g_paletteTexture = bgfx::createTexture2D(3, 256, false, 1, bgfx::TextureFormat::R8U);
+    g_backgroundTexture =
+        bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
+    g_paletteTexture = bgfx::createTexture2D (3, 256, false, 1, bgfx::TextureFormat::R8U);
 }
 
-ImVec2 gameResolution = { 320, 200 };
+ImVec2 gameResolution = {320, 200};
 
-void renderGameWindow()
+void renderGameWindow ()
 {
-    if (ImGui::Begin("Game"))
+    if (ImGui::Begin ("Game"))
     {
-        if (bgfx::getCaps()->originBottomLeft)
+        if (bgfx::getCaps ()->originBottomLeft)
         {
-            ImGui::Image(fieldModelInspector_Texture, gameResolution, ImVec2(0.0f, 1.0f), ImVec2(1.0f, 0.0f));
+            ImGui::Image (fieldModelInspector_Texture,
+                          gameResolution,
+                          ImVec2 (0.0f, 1.0f),
+                          ImVec2 (1.0f, 0.0f));
         }
         else
         {
-            ImGui::Image(fieldModelInspector_Texture, gameResolution, ImVec2(0.0f, 0.0f), ImVec2(1.0f, 1.0f));
+            ImGui::Image (fieldModelInspector_Texture,
+                          gameResolution,
+                          ImVec2 (0.0f, 0.0f),
+                          ImVec2 (1.0f, 1.0f));
         }
     }
-    ImGui::End();
+    ImGui::End ();
 }
 
-void osystem_startFrame()
+void osystem_startFrame ()
 {
     if (!g_bgfxMainResourcesInitialized)
     {
-        initBgfxMainResources();
+        initBgfxMainResources ();
         g_bgfxMainResourcesInitialized = true;
     }
 
-    static ImVec2 oldWindowSize = { -1,-1 };
+    static ImVec2 oldWindowSize = {-1, -1};
 
     if (debuggerVar_debugMenuDisplayed)
     {
         gameViewId = 1;
-        if (ImGui::Begin("Game"))
+        if (ImGui::Begin ("Game"))
         {
-            ImVec2 currentWindowSize = ImGui::GetContentRegionAvail();
+            ImVec2 currentWindowSize = ImGui::GetContentRegionAvail ();
 
-            currentWindowSize[0] = std::max<int>(currentWindowSize[0], 1);
-            currentWindowSize[1] = std::max<int>(currentWindowSize[1], 1);
+            currentWindowSize[0] = std::max<int> (currentWindowSize[0], 1);
+            currentWindowSize[1] = std::max<int> (currentWindowSize[1], 1);
 
             gameResolution = currentWindowSize;
         }
         else
         {
-            gameResolution = { 320, 200 };
+            gameResolution = {320, 200};
         }
-        ImGui::End();
+        ImGui::End ();
 
-        if ((gameResolution[0] != oldWindowSize[0]) || (gameResolution[1] != oldWindowSize[1]))
+        if ((gameResolution[0] != oldWindowSize[0]) ||
+            (gameResolution[1] != oldWindowSize[1]))
         {
             oldWindowSize = gameResolution;
 
-            if (bgfx::isValid(fieldModelInspector_FB))
+            if (bgfx::isValid (fieldModelInspector_FB))
             {
-                bgfx::destroy(fieldModelInspector_FB);
+                bgfx::destroy (fieldModelInspector_FB);
             }
 
             const uint64_t tsFlags = 0
-                //| BGFX_SAMPLER_MIN_POINT
-                //| BGFX_SAMPLER_MAG_POINT
-                //| BGFX_SAMPLER_MIP_POINT
-                | BGFX_SAMPLER_U_CLAMP
-                | BGFX_SAMPLER_V_CLAMP
-                ;
+                                     //| BGFX_SAMPLER_MIN_POINT
+                                     //| BGFX_SAMPLER_MAG_POINT
+                                     //| BGFX_SAMPLER_MIP_POINT
+                                     | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
-            fieldModelInspector_Texture = bgfx::createTexture2D(gameResolution[0], gameResolution[1], false, 0, bgfx::TextureFormat::BGRA8, BGFX_TEXTURE_RT | tsFlags);
-            fieldModelInspector_Depth = bgfx::createTexture2D(gameResolution[0], gameResolution[1], false, 0, bgfx::TextureFormat::D24S8, BGFX_TEXTURE_RT | tsFlags);
+            fieldModelInspector_Texture =
+                bgfx::createTexture2D (gameResolution[0],
+                                       gameResolution[1],
+                                       false,
+                                       0,
+                                       bgfx::TextureFormat::BGRA8,
+                                       BGFX_TEXTURE_RT | tsFlags);
+            fieldModelInspector_Depth = bgfx::createTexture2D (gameResolution[0],
+                                                               gameResolution[1],
+                                                               false,
+                                                               0,
+                                                               bgfx::TextureFormat::D24S8,
+                                                               BGFX_TEXTURE_RT | tsFlags);
             std::array<bgfx::Attachment, 2> attachements;
-            attachements[0].init(fieldModelInspector_Texture);
-            attachements[1].init(fieldModelInspector_Depth);
-            fieldModelInspector_FB = bgfx::createFrameBuffer(2, &attachements[0], true);
+            attachements[0].init (fieldModelInspector_Texture);
+            attachements[1].init (fieldModelInspector_Depth);
+            fieldModelInspector_FB = bgfx::createFrameBuffer (2, &attachements[0], true);
         }
-        bgfx::setViewFrameBuffer(gameViewId, fieldModelInspector_FB);
-        bgfx::setViewRect(gameViewId, 0, 0, gameResolution[0], gameResolution[1]);
+        bgfx::setViewFrameBuffer (gameViewId, fieldModelInspector_FB);
+        bgfx::setViewRect (gameViewId, 0, 0, gameResolution[0], gameResolution[1]);
     }
     else
     {
         gameViewId = 0;
         gameResolution[0] = outputResolution[0];
         gameResolution[1] = outputResolution[1];
-        bgfx::setViewFrameBuffer(gameViewId, BGFX_INVALID_HANDLE); //bind the backbuffer
+        bgfx::setViewFrameBuffer (gameViewId, BGFX_INVALID_HANDLE); // bind the backbuffer
     }
 
     {
-        bgfx::setViewClear(gameViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
+        bgfx::setViewClear (gameViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
 
-        bgfx::setViewName(gameViewId, "Game");
-        bgfx::setViewMode(gameViewId, bgfx::ViewMode::Sequential);
+        bgfx::setViewName (gameViewId, "Game");
+        bgfx::setViewMode (gameViewId, bgfx::ViewMode::Sequential);
 
-        bgfx::touch(gameViewId);
+        bgfx::touch (gameViewId);
     }
 
-    osystem_drawBackground();
+    osystem_drawBackground ();
 }
 
 unsigned char frontBuffer[320 * 200];
 unsigned char physicalScreen[320 * 200];
 unsigned char physicalScreenRGB[320 * 200 * 3];
 
-void osystem_CopyBlockPhys(unsigned char* videoBuffer, int left, int top, int right, int bottom)
+void osystem_CopyBlockPhys (
+    unsigned char *videoBuffer, int left, int top, int right, int bottom)
 {
-    unsigned char* out = physicalScreenRGB;
-    unsigned char* in = (unsigned char*)&videoBuffer[0] + left + top * 320;
+    unsigned char *out = physicalScreenRGB;
+    unsigned char *in = (unsigned char *)&videoBuffer[0] + left + top * 320;
 
     int i;
     int j;
@@ -537,8 +612,8 @@ void osystem_CopyBlockPhys(unsigned char* videoBuffer, int left, int top, int ri
 
     for (i = top; i < bottom; i++)
     {
-        in = (unsigned char*)&videoBuffer[0] + left + i * 320;
-        unsigned char* out2 = physicalScreen + left + i * 320;
+        in = (unsigned char *)&videoBuffer[0] + left + i * 320;
+        unsigned char *out2 = physicalScreen + left + i * 320;
         for (j = left; j < right; j++)
         {
             unsigned char color = *(in++);
@@ -551,13 +626,20 @@ void osystem_CopyBlockPhys(unsigned char* videoBuffer, int left, int top, int ri
         }
     }
 
-    bgfx::updateTexture2D(g_backgroundTexture, 0, 0, 0, 0, 320, 200, bgfx::copy(physicalScreen, 320 * 200));
+    bgfx::updateTexture2D (g_backgroundTexture,
+                           0,
+                           0,
+                           0,
+                           0,
+                           320,
+                           200,
+                           bgfx::copy (physicalScreen, 320 * 200));
 }
 
-void osystem_refreshFrontTextureBuffer()
+void osystem_refreshFrontTextureBuffer ()
 {
-    unsigned char* out = physicalScreenRGB;
-    unsigned char* in = physicalScreen;
+    unsigned char *out = physicalScreenRGB;
+    unsigned char *in = physicalScreen;
 
     int i;
     int j;
@@ -570,15 +652,22 @@ void osystem_refreshFrontTextureBuffer()
         *(out++) = RGB_Pal[color * 3 + 2];
     }
 
-    bgfx::updateTexture2D(g_backgroundTexture, 0, 0, 0, 0, 320, 200, bgfx::copy(physicalScreen, 320 * 200));
+    bgfx::updateTexture2D (g_backgroundTexture,
+                           0,
+                           0,
+                           0,
+                           0,
+                           320,
+                           200,
+                           bgfx::copy (physicalScreen, 320 * 200));
 }
 
-void osystem_initBuffer()
+void osystem_initBuffer ()
 {
-    memset(backBuffer, 0x0, 512 * 256 * 3);
+    memset (backBuffer, 0x0, 512 * 256 * 3);
 }
 
-void gameScreenToViewport(float* X, float* Y)
+void gameScreenToViewport (float *X, float *Y)
 {
     (*X) = (*X) * g_screenWidth / 320.f;
     (*Y) = (*Y) * g_screenHeight / 200.f;
@@ -586,15 +675,15 @@ void gameScreenToViewport(float* X, float* Y)
     (*Y) = g_screenHeight - (*Y);
 }
 
-void osystem_setClip(float left, float top, float right, float bottom)
+void osystem_setClip (float left, float top, float right, float bottom)
 {
     float x1 = left - 1;
     float y1 = bottom + 1;
     float x2 = right + 1;
     float y2 = top - 1;
 
-    gameScreenToViewport(&x1, &y1);
-    gameScreenToViewport(&x2, &y2);
+    gameScreenToViewport (&x1, &y1);
+    gameScreenToViewport (&x2, &y2);
 
     float width = x2 - x1;
     float height = y2 - y1;
@@ -605,136 +694,133 @@ void osystem_setClip(float left, float top, float right, float bottom)
     currentScissor[2] = ((right - left + 2) / 320.f) * gameResolution[0];
     currentScissor[3] = ((bottom - top + 2) / 200.f) * gameResolution[1];
 
-    currentScissor[0] = std::max<float>(currentScissor[0], 0);
-    currentScissor[1] = std::max<float>(currentScissor[1], 0);
+    currentScissor[0] = std::max<float> (currentScissor[0], 0);
+    currentScissor[1] = std::max<float> (currentScissor[1], 0);
 
-    bgfx::setScissor(currentScissor[0], currentScissor[1], currentScissor[2], currentScissor[3]);
+    bgfx::setScissor (
+        currentScissor[0], currentScissor[1], currentScissor[2], currentScissor[3]);
 
-    checkGL();
+    checkGL ();
 }
 
-void osystem_clearClip()
+void osystem_clearClip ()
 {
-    bgfx::setScissor(0, 0, gameResolution[0], gameResolution[1]);
+    bgfx::setScissor (0, 0, gameResolution[0], gameResolution[1]);
 
-    checkGL();
+    checkGL ();
 }
 
-void osystem_stopFrame()
+void osystem_stopFrame ()
 {
 }
 
-void osystem_startModelRender()
+void osystem_startModelRender ()
 {
-
 }
 
-void osystem_stopModelRender()
+void osystem_stopModelRender ()
 {
-    osystem_flushPendingPrimitives();
+    osystem_flushPendingPrimitives ();
 }
 
-void osystem_flushPendingPrimitives()
+void osystem_flushPendingPrimitives ()
 {
     if (numUsedFlatVertices)
     {
         bgfx::VertexLayout layout;
-        layout
-            .begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
-            .end();
+        layout.begin ()
+            .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
+            .end ();
 
         bgfx::TransientVertexBuffer transientBuffer;
-        bgfx::allocTransientVertexBuffer(&transientBuffer, numUsedFlatVertices, layout);
+        bgfx::allocTransientVertexBuffer (&transientBuffer, numUsedFlatVertices, layout);
 
-        memcpy(transientBuffer.data, &flatVertices[0], sizeof(polyVertex) * numUsedFlatVertices);
+        memcpy (transientBuffer.data,
+                &flatVertices[0],
+                sizeof (polyVertex) * numUsedFlatVertices);
 
-        bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-            | BGFX_STATE_WRITE_A
-            | BGFX_STATE_WRITE_Z
-            | BGFX_STATE_DEPTH_TEST_LEQUAL
-            | BGFX_STATE_MSAA
-        );
+        bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                        BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LEQUAL |
+                        BGFX_STATE_MSAA);
 
         static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(paletteTextureUniform))
+        if (!bgfx::isValid (paletteTextureUniform))
         {
-            paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+            paletteTextureUniform =
+                bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
         }
 
-        bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
+        bgfx::setTexture (1, paletteTextureUniform, g_paletteTexture);
 
-        bgfx::setVertexBuffer(0, &transientBuffer);
-        bgfx::submit(gameViewId, getFlatShader());
+        bgfx::setVertexBuffer (0, &transientBuffer);
+        bgfx::submit (gameViewId, getFlatShader ());
     }
 
     if (numUsedNoiseVertices)
     {
         bgfx::VertexLayout layout;
-        layout
-            .begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
-            .end();
+        layout.begin ()
+            .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
+            .end ();
 
         bgfx::TransientVertexBuffer transientBuffer;
-        bgfx::allocTransientVertexBuffer(&transientBuffer, numUsedNoiseVertices, layout);
+        bgfx::allocTransientVertexBuffer (&transientBuffer, numUsedNoiseVertices, layout);
 
-        memcpy(transientBuffer.data, &noiseVertices[0], sizeof(polyVertex) * numUsedNoiseVertices);
+        memcpy (transientBuffer.data,
+                &noiseVertices[0],
+                sizeof (polyVertex) * numUsedNoiseVertices);
 
-        bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-            | BGFX_STATE_WRITE_A
-            | BGFX_STATE_WRITE_Z
-            | BGFX_STATE_DEPTH_TEST_LEQUAL
-            | BGFX_STATE_MSAA
-        );
+        bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                        BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LEQUAL |
+                        BGFX_STATE_MSAA);
 
         static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(paletteTextureUniform))
+        if (!bgfx::isValid (paletteTextureUniform))
         {
-            paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+            paletteTextureUniform =
+                bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
         }
 
-        bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
+        bgfx::setTexture (1, paletteTextureUniform, g_paletteTexture);
 
-        bgfx::setVertexBuffer(0, &transientBuffer);
-        bgfx::submit(gameViewId, getNoiseShader());
+        bgfx::setVertexBuffer (0, &transientBuffer);
+        bgfx::submit (gameViewId, getNoiseShader ());
     }
 
     if (numUsedRampVertices)
     {
         bgfx::VertexLayout layout;
-        layout
-            .begin()
-            .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-            .add(bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
-            .end();
+        layout.begin ()
+            .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+            .add (bgfx::Attrib::Color0, 4, bgfx::AttribType::Uint8)
+            .end ();
 
         bgfx::TransientVertexBuffer transientBuffer;
-        bgfx::allocTransientVertexBuffer(&transientBuffer, numUsedRampVertices, layout);
+        bgfx::allocTransientVertexBuffer (&transientBuffer, numUsedRampVertices, layout);
 
-        memcpy(transientBuffer.data, &rampVertices[0], sizeof(polyVertex) * numUsedRampVertices);
+        memcpy (transientBuffer.data,
+                &rampVertices[0],
+                sizeof (polyVertex) * numUsedRampVertices);
 
-        bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-            | BGFX_STATE_WRITE_A
-            | BGFX_STATE_WRITE_Z
-            | BGFX_STATE_DEPTH_TEST_LEQUAL
-            | BGFX_STATE_MSAA
-        );
+        bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                        BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LEQUAL |
+                        BGFX_STATE_MSAA);
 
         static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-        if (!bgfx::isValid(paletteTextureUniform))
+        if (!bgfx::isValid (paletteTextureUniform))
         {
-            paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+            paletteTextureUniform =
+                bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
         }
 
-        bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
-        bgfx::setVertexBuffer(0, &transientBuffer);
-        bgfx::submit(gameViewId, getRampShader());
+        bgfx::setTexture (1, paletteTextureUniform, g_paletteTexture);
+        bgfx::setVertexBuffer (0, &transientBuffer);
+        bgfx::submit (gameViewId, getRampShader ());
     }
 #if 0
     if (numUsedPointSprites)
@@ -772,14 +858,14 @@ void osystem_flushPendingPrimitives()
     numUsedTransparentVertices = 0;
 }
 
-void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyType)
+void osystem_fillPoly (float *buffer, int numPoint, unsigned char color, u8 polyType)
 {
 #define MAX_POINTS_PER_POLY 50
     float UVArray[MAX_POINTS_PER_POLY];
 
-    assert(numPoint < MAX_POINTS_PER_POLY);
+    assert (numPoint < MAX_POINTS_PER_POLY);
 
-    checkGL();
+    checkGL ();
 
     // default state:
     // GL_VERTEX_ARRAY
@@ -820,17 +906,17 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     default:
     case 0: // flat (triste)
     {
-        polyVertex* pVertex = &flatVertices[numUsedFlatVertices];
+        polyVertex *pVertex = &flatVertices[numUsedFlatVertices];
         numUsedFlatVertices += (numPoint - 2) * 3;
-        assert(numUsedFlatVertices < NUM_MAX_FLAT_VERTICES);
+        assert (numUsedFlatVertices < NUM_MAX_FLAT_VERTICES);
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -849,17 +935,17 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     }
     case 1: // dither (pierre/tele)
     {
-        polyVertex* pVertex = &noiseVertices[numUsedNoiseVertices];
+        polyVertex *pVertex = &noiseVertices[numUsedNoiseVertices];
         numUsedNoiseVertices += (numPoint - 2) * 3;
-        assert(numUsedNoiseVertices < NUM_MAX_NOISE_VERTICES);
+        assert (numUsedNoiseVertices < NUM_MAX_NOISE_VERTICES);
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -881,17 +967,17 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     }
     case 2: // trans
     {
-        polyVertex* pVertex = &transparentVertices[numUsedTransparentVertices];
+        polyVertex *pVertex = &transparentVertices[numUsedTransparentVertices];
         numUsedTransparentVertices += (numPoint - 2) * 3;
-        assert(numUsedTransparentVertices < NUM_MAX_TRANSPARENT_VERTICES);
+        assert (numUsedTransparentVertices < NUM_MAX_TRANSPARENT_VERTICES);
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -910,9 +996,9 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     case 4: // copper (ramps top to bottom)
     case 5: // copper2 (ramps top to bottom, 2 scanline per color)
     {
-        polyVertex* pVertex = &rampVertices[numUsedRampVertices];
+        polyVertex *pVertex = &rampVertices[numUsedRampVertices];
         numUsedRampVertices += (numPoint - 2) * 3;
-        assert(numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
+        assert (numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
 
         int bank = (color & 0xF0) >> 4;
         int startColor = color & 0xF;
@@ -926,9 +1012,9 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -946,24 +1032,24 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     }
     case 3: // marbre (ramp left to right)
     {
-        polyVertex* pVertex = &rampVertices[numUsedRampVertices];
+        polyVertex *pVertex = &rampVertices[numUsedRampVertices];
         numUsedRampVertices += (numPoint - 2) * 3;
-        assert(numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
+        assert (numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
 
         float colorStep = 15.f / polyWidth;
 
         int bank = (color & 0xF0) >> 4;
         int startColor = color & 0xF;
 
-        assert(startColor == 0);
+        assert (startColor == 0);
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -981,24 +1067,24 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
     }
     case 6: // marbre2 (ramp right to left)
     {
-        polyVertex* pVertex = &rampVertices[numUsedRampVertices];
+        polyVertex *pVertex = &rampVertices[numUsedRampVertices];
         numUsedRampVertices += (numPoint - 2) * 3;
-        assert(numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
+        assert (numUsedRampVertices < NUM_MAX_RAMP_VERTICES);
 
         float colorStep = 15.f / polyWidth;
 
         int bank = (color & 0xF0) >> 4;
         int startColor = color & 0xF;
 
-        assert(startColor == 0);
+        assert (startColor == 0);
 
         for (int i = 0; i < numPoint; i++)
         {
             if (i >= 3)
             {
-                memcpy(pVertex, &pVertex[-3], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-3], sizeof (polyVertex));
                 pVertex++;
-                memcpy(pVertex, &pVertex[-2], sizeof(polyVertex));
+                memcpy (pVertex, &pVertex[-2], sizeof (polyVertex));
                 pVertex++;
             }
 
@@ -1015,10 +1101,11 @@ void osystem_fillPoly(float* buffer, int numPoint, unsigned char color, u8 polyT
         break;
     }
     }
-    checkGL();
+    checkGL ();
 }
 
-void osystem_draw3dLine(float x1, float y1, float z1, float x2, float y2, float z2, unsigned char color)
+void osystem_draw3dLine (
+    float x1, float y1, float z1, float x2, float y2, float z2, unsigned char color)
 {
 #if 0
     GLfloat lineVertices[2 * 3];
@@ -1085,7 +1172,20 @@ void osystem_draw3dLine(float x1, float y1, float z1, float x2, float y2, float 
 #endif
 }
 
-void osystem_draw3dQuad(float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, unsigned char color, int transparency)
+void osystem_draw3dQuad (float x1,
+                         float y1,
+                         float z1,
+                         float x2,
+                         float y2,
+                         float z2,
+                         float x3,
+                         float y3,
+                         float z3,
+                         float x4,
+                         float y4,
+                         float z4,
+                         unsigned char color,
+                         int transparency)
 {
     float lineVertices[4 * 3];
     unsigned char lineColor1[4 * 4];
@@ -1102,7 +1202,6 @@ void osystem_draw3dQuad(float x1, float y1, float z1, float x2, float y2, float 
         lineColor2[i * 4 + 1] = RGB_Pal[color * 3 + 1];
         lineColor2[i * 4 + 2] = RGB_Pal[color * 3 + 2];
         lineColor2[i * 4 + 3] = 255;
-
     }
 
     lineVertices[0] = x1;
@@ -1121,13 +1220,13 @@ void osystem_draw3dQuad(float x1, float y1, float z1, float x2, float y2, float 
     lineVertices[10] = y3;
     lineVertices[11] = z3;
 
-    osystem_draw3dLine(x1, y1, z1, x2, y2, z2, color);
-    osystem_draw3dLine(x2, y2, z2, x3, y3, z3, color);
-    osystem_draw3dLine(x3, y3, z3, x4, y4, z4, color);
-    osystem_draw3dLine(x4, y4, z4, x1, y1, z1, color);
+    osystem_draw3dLine (x1, y1, z1, x2, y2, z2, color);
+    osystem_draw3dLine (x2, y2, z2, x3, y3, z3, color);
+    osystem_draw3dLine (x3, y3, z3, x4, y4, z4, color);
+    osystem_draw3dLine (x4, y4, z4, x1, y1, z1, color);
 
-    //glEnable(GL_DEPTH_TEST);
-    //glDisable(GL_BLEND);
+    // glEnable(GL_DEPTH_TEST);
+    // glDisable(GL_BLEND);
 
     /*glColor4ub(1.f, 1.f, 1.f, 1.f);
     glVertexPointer(3, GL_FLOAT, 0, lineVertices);
@@ -1143,19 +1242,18 @@ void osystem_draw3dQuad(float x1, float y1, float z1, float x2, float y2, float 
     checkGL();
     }
     */
-
 }
 
-void osystem_drawSphere(float X, float Y, float Z, u8 color, float size)
+void osystem_drawSphere (float X, float Y, float Z, u8 color, float size)
 {
-    osystem_drawPoint(X, Y, Z, color, size * 3.14f);
+    osystem_drawPoint (X, Y, Z, color, size * 3.14f);
 }
 
-void osystem_drawPoint(float X, float Y, float Z, u8 color, float size)
+void osystem_drawPoint (float X, float Y, float Z, u8 color, float size)
 {
-    pointSpriteVertex* pVertex = &pointSprites[numUsedPointSprites];
+    pointSpriteVertex *pVertex = &pointSprites[numUsedPointSprites];
     numUsedPointSprites++;
-    assert(numUsedPointSprites < NUM_MAX_POINT_SPRITES);
+    assert (numUsedPointSprites < NUM_MAX_POINT_SPRITES);
 
     pVertex->X = X;
     pVertex->Y = Y;
@@ -1168,7 +1266,7 @@ void osystem_drawPoint(float X, float Y, float Z, u8 color, float size)
 }
 
 #ifdef FITD_DEBUGGER
-void osystem_drawDebugText(const u32 X, const u32 Y, const u8* string)
+void osystem_drawDebugText (const u32 X, const u32 Y, const u8 *string)
 {
 #if 0
     u32 currentX = X;
@@ -1224,46 +1322,59 @@ void osystem_drawDebugText(const u32 X, const u32 Y, const u8* string)
 }
 #endif
 
-void osystem_flip(unsigned char* videoBuffer)
+void osystem_flip (unsigned char *videoBuffer)
 {
-    osystem_flushPendingPrimitives();
+    osystem_flushPendingPrimitives ();
 }
 
-void osystem_createMask(const std::array<u8, 320 * 200>& mask, int roomId, int maskId, unsigned char* refImage, int maskX1, int maskY1, int maskX2, int maskY2)
+void osystem_createMask (const std::array<u8, 320 * 200> &mask,
+                         int roomId,
+                         int maskId,
+                         unsigned char *refImage,
+                         int maskX1,
+                         int maskY1,
+                         int maskX2,
+                         int maskY2)
 {
-    if (maskTextures.size() < roomId + 1)
+    if (maskTextures.size () < roomId + 1)
     {
-        maskTextures.resize(roomId + 1);
+        maskTextures.resize (roomId + 1);
     }
-    if (maskTextures[roomId].size() < maskId + 1)
+    if (maskTextures[roomId].size () < maskId + 1)
     {
-        maskTextures[roomId].resize(maskId + 1);
+        maskTextures[roomId].resize (maskId + 1);
     }
 
-    if (bgfx::isValid(maskTextures[roomId][maskId].maskTexture))
+    if (bgfx::isValid (maskTextures[roomId][maskId].maskTexture))
     {
-        bgfx::destroy(maskTextures[roomId][maskId].maskTexture);
+        bgfx::destroy (maskTextures[roomId][maskId].maskTexture);
         maskTextures[roomId][maskId].maskTexture = BGFX_INVALID_HANDLE;
     }
 
-    if (bgfx::isValid(maskTextures[roomId][maskId].vertexBuffer))
+    if (bgfx::isValid (maskTextures[roomId][maskId].vertexBuffer))
     {
-        bgfx::destroy(maskTextures[roomId][maskId].vertexBuffer);
+        bgfx::destroy (maskTextures[roomId][maskId].vertexBuffer);
         maskTextures[roomId][maskId].vertexBuffer = BGFX_INVALID_HANDLE;
     }
 
-    maskTextures[roomId][maskId].maskTexture = bgfx::createTexture2D(320, 200, false, 1, bgfx::TextureFormat::R8U, 0, bgfx::copy(&mask[0], 320 * 200));
+    maskTextures[roomId][maskId].maskTexture =
+        bgfx::createTexture2D (320,
+                               200,
+                               false,
+                               1,
+                               bgfx::TextureFormat::R8U,
+                               0,
+                               bgfx::copy (&mask[0], 320 * 200));
     maskTextures[roomId][maskId].maskX1 = maskX1;
     maskTextures[roomId][maskId].maskX2 = maskX2 + 1;
     maskTextures[roomId][maskId].maskY1 = maskY1;
     maskTextures[roomId][maskId].maskY2 = maskY2 + 1;
 
     bgfx::VertexLayout layout;
-    layout
-        .begin()
-        .add(bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add(bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .end();
+    layout.begin ()
+        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end ();
 
     float X1 = maskTextures[roomId][maskId].maskX1;
     float X2 = maskTextures[roomId][maskId].maskX2;
@@ -1278,7 +1389,7 @@ void osystem_createMask(const std::array<u8, 320 * 200>& mask, int roomId, int m
         float texcoord[2];
     } vertexBuffer[4];
 
-    sVertice* pVertices = vertexBuffer;
+    sVertice *pVertices = vertexBuffer;
     pVertices->position[0] = X1;
     pVertices->position[1] = Y2;
     pVertices->position[2] = maskZ;
@@ -1304,18 +1415,19 @@ void osystem_createMask(const std::array<u8, 320 * 200>& mask, int roomId, int m
     pVertices->texcoord[1] = Y1 / 200.f;
     pVertices++;
 
-    maskTextures[roomId][maskId].vertexBuffer = bgfx::createVertexBuffer(bgfx::copy(vertexBuffer, sizeof(vertexBuffer)), layout);
+    maskTextures[roomId][maskId].vertexBuffer = bgfx::createVertexBuffer (
+        bgfx::copy (vertexBuffer, sizeof (vertexBuffer)), layout);
 }
 
-void osystem_drawMask(int roomId, int maskId)
+void osystem_drawMask (int roomId, int maskId)
 {
     if (g_gameId == TIMEGATE)
         return;
 
-    if (!bgfx::isValid(maskTextures[roomId][maskId].maskTexture))
+    if (!bgfx::isValid (maskTextures[roomId][maskId].maskTexture))
         return;
 
-    if (!bgfx::isValid(maskTextures[roomId][maskId].vertexBuffer))
+    if (!bgfx::isValid (maskTextures[roomId][maskId].vertexBuffer))
         return;
 
 #ifdef FITD_DEBUGGER
@@ -1324,30 +1436,30 @@ void osystem_drawMask(int roomId, int maskId)
 #endif
 
     static bgfx::UniformHandle backgroundTextureUniform = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(backgroundTextureUniform))
+    if (!bgfx::isValid (backgroundTextureUniform))
     {
-        backgroundTextureUniform = bgfx::createUniform("s_backgroundTexture", bgfx::UniformType::Sampler);
+        backgroundTextureUniform =
+            bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
     }
     static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(paletteTextureUniform))
+    if (!bgfx::isValid (paletteTextureUniform))
     {
-        paletteTextureUniform = bgfx::createUniform("s_paletteTexture", bgfx::UniformType::Sampler);
+        paletteTextureUniform =
+            bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
     }
     static bgfx::UniformHandle maskTextureUniform = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid(maskTextureUniform))
+    if (!bgfx::isValid (maskTextureUniform))
     {
-        maskTextureUniform = bgfx::createUniform("s_maskTexture", bgfx::UniformType::Sampler);
+        maskTextureUniform =
+            bgfx::createUniform ("s_maskTexture", bgfx::UniformType::Sampler);
     }
 
-    bgfx::setState(0 | BGFX_STATE_WRITE_RGB
-        | BGFX_STATE_MSAA
-        | BGFX_STATE_PT_TRISTRIP
-    );
+    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_MSAA | BGFX_STATE_PT_TRISTRIP);
 
-    bgfx::setVertexBuffer(0, maskTextures[roomId][maskId].vertexBuffer);
+    bgfx::setVertexBuffer (0, maskTextures[roomId][maskId].vertexBuffer);
 
-    bgfx::setTexture(2, backgroundTextureUniform, g_backgroundTexture);
-    bgfx::setTexture(1, paletteTextureUniform, g_paletteTexture);
-    bgfx::setTexture(0, maskTextureUniform, maskTextures[roomId][maskId].maskTexture);
-    bgfx::submit(gameViewId, getMaskBackgroundShader());
+    bgfx::setTexture (2, backgroundTextureUniform, g_backgroundTexture);
+    bgfx::setTexture (1, paletteTextureUniform, g_paletteTexture);
+    bgfx::setTexture (0, maskTextureUniform, maskTextures[roomId][maskId].maskTexture);
+    bgfx::submit (gameViewId, getMaskBackgroundShader ());
 }

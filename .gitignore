@@ -3,3 +3,4 @@
 build/vs2022
 data
 build
+.cache/clangd/index

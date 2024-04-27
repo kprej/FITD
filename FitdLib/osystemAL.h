@@ -1,11 +1,12 @@
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
-  
-void osystemAL_init();
-void osystemAL_udpate();
 
-void checkALError();
+    // void osystemAL_init();
+    // void osystemAL_udpate();
+
+    // void checkALError();
 
 #ifdef __cplusplus
 }

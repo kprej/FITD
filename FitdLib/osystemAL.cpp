@@ -1,9 +1,10 @@
-#include <stdlib.h>
 #include <assert.h>
+#include <stdlib.h>
 
-//#include "OpenAL/al.h"
-//#include "OpenAL/alc.h"
+// #include "OpenAL/al.h"
+// #include "OpenAL/alc.h"
 
+/*
 #include "soloud.h"
 #include "soloud_file.h"
 #include "soloud_wav.h"
@@ -45,7 +46,8 @@ public:
         mParent = aParent;
     }
 
-    virtual unsigned int getAudio(float *aBuffer, unsigned int aSamplesToRead, unsigned int aBufferSize) override
+    virtual unsigned int getAudio(float *aBuffer, unsigned int aSamplesToRead,
+unsigned int aBufferSize) override
     {
         for (int i = 0; i < aSamplesToRead; i++)
         {
@@ -55,8 +57,8 @@ public:
             }
             else
             {
-                aBuffer[i] = (((float)((unsigned char*)mParent->m_samples)[mOffset]) - 128.f) / 128.f;
-                mOffset++;
+                aBuffer[i] = (((float)((unsigned
+char*)mParent->m_samples)[mOffset]) - 128.f) / 128.f; mOffset++;
             }
         }
         return aSamplesToRead;
@@ -73,7 +75,8 @@ public:
     }
 };
 
-ITD_AudioSource::ITD_AudioSource(char* samplePtr, int size) : SoLoud::AudioSource()
+ITD_AudioSource::ITD_AudioSource(char* samplePtr, int size) :
+SoLoud::AudioSource()
 {
     assert(samplePtr[26] == 1); //assert first block is of sound data type
     int sampleSize = (READ_LE_U32(samplePtr + 26) >> 8) - 2;
@@ -145,4 +148,4 @@ int osystem_playTrack(int trackId)
     gSoloud->play(*pWavStream);
 
     return 0;
-}
+}*/
