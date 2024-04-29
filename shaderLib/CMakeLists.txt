@@ -1,26 +1,26 @@
 include (shader_comp)
 
-macro(addShaderProgram vsname psname varyingname)
+macro(addShaderProgram name)
     compile_shader_to_header(
         TYPE VERTEX
-        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/${vsname}
+        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${vsname}
         OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated
         INCLUDE_DIRS ${bgfx_SOURCE_DIR}/bgfx/src
-        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/${varyingname})
+        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${varyingname})
 
     compile_shader_to_header(
         TYPE FRAGMENT
-        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/${psname}
+        SHADERS ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${psname}
         OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/generated
         INCLUDE_DIRS ${bgfx_SOURCE_DIR}/bgfx/src
-        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/${varyingname})
+        VARYING_DEF ${CMAKE_CURRENT_SOURCE_DIR}/shaders/${varyingname})
 endmacro()
 
-addShaderProgram(background_vs background_ps background.varying.def)
-addShaderProgram(maskBackground_vs maskBackground_ps maskBackground.varying.def)
-addShaderProgram(flat_vs flat_ps flat.varying.def)
-addShaderProgram(noise_vs noise_ps noise.varying.def)
-addShaderProgram(ramp_vs ramp_ps ramp.varying.def)
+addShaderProgram(background)
+addShaderProgram(maskBackground)
+addShaderProgram(flat)
+addShaderProgram(noise)
+addShaderProgram(ramp)
 
 add_library(
     shaderLib
