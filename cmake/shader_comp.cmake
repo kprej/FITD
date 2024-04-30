@@ -4,7 +4,7 @@ function(compile_shader_to_header)
     set(multiValueArgs SHADERS INCLUDE_DIRS)
     cmake_parse_arguments(ARGS "${options}" "${oneValueArgs}" "${multiValueArgs}" "${ARGN}")
 
-    set(PROFILES 440) # pssl
+    set(PROFILES 410) # pssl
     if(UNIX AND NOT APPLE)
         set(PLATFORM LINUX)
     elseif(EMSCRIPTEN)
@@ -48,7 +48,6 @@ function(compile_shader_to_header)
                 O "$<$<CONFIG:debug>:0>$<$<CONFIG:release>:3>$<$<CONFIG:relwithdebinfo>:3>$<$<CONFIG:minsizerel>:3>"
                 VARYINGDEF ${ARGS_VARYING_DEF}
                 INCLUDES ${BGFX_SHADER_INCLUDE_PATH} ${ARGS_INCLUDE_DIRS}
-                BIN2C BIN2C ${SHADER_FILE_NAME_WE}_${PROFILE_EXT}
             )
             list(APPEND OUTPUTS ${OUTPUT})
             list(APPEND ALL_OUTPUTS ${OUTPUT})

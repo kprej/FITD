@@ -34,6 +34,8 @@ set(SHADERS
     shaders/ramp_vs 
     shaders/ramp_ps)
 
+file(COPY "generated/" DESTINATION "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/generated" FILES_MATCHING PATTERN "*")
+
 add_executable (pak
     bgfxHandle.cpp
     bgfxHandle.h

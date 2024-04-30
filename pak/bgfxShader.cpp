@@ -4,42 +4,45 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iterator>
+#include <vector>
 
 using namespace std;
 
 namespace
 {
 
-bgfx::Memory const *loadMem (filesystem::path const &path_)
-{
-    fstream file (path_, ios::in | ios::binary);
-
-    if (!file.is_open ())
-    {
-        PLOGF << "Failed to load shader: " << path_.string ();
-        return nullptr;
-    }
-
-    uint32_t size = (uint32_t)file.tellg ();
-
-    bgfx::Memory const *mem = bgfx::alloc (size + 1);
-
-    file.read (reinterpret_cast<char *> (mem->data), size);
-    file.close ();
-
-    mem->data[mem->size - 1] = '\0';
-    return mem;
-}
-
 bgfx::ShaderHandle loadShader (std::string const &name_)
 {
+    PLOGD << "Loading shader: " << name_;
     filesystem::path const shader ("generated/" + name_ + ".bin");
 
     if (!filesystem::exists (shader))
+    {
+        PLOGD << "Can't open file: " << shader.string ();
         return {};
+    }
 
-    bgfx::ShaderHandle handle =
-        bgfx::createShader (loadMem (filesystem::absolute (shader)));
+    fstream file (shader, ios::in | ios::binary);
+
+    if (!file.is_open ())
+    {
+        PLOGF << "Failed to load shader: " << shader.string ();
+        return {};
+    }
+
+    vector<unsigned char> binary;
+    copy (
+        istream_iterator<char> (file), istream_iterator<char> (), back_inserter (binary));
+
+    bgfx::Memory const *mem = bgfx::copy (binary.data (), binary.size ());
+    bgfx::ShaderHandle handle = bgfx::createShader (mem);
+
+    if (handle.idx > 512)
+    {
+        PLOGF << "Invalid shader handle";
+        return {};
+    }
 
     bgfx::setName (handle, name_.data (), name_.size ());
 

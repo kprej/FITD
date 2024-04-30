@@ -3,6 +3,7 @@
 #include "osystem.h"
 
 #include <backends/imgui_impl_sdl3.h>
+#include <bgfx/platform.h>
 #include <imgui.h>
 
 #include <plog/Log.h>
@@ -68,21 +69,19 @@ void bgfxHandle_t::init ()
 {
     PLOGD << "Init BGFX";
 
-#if BX_PLATFORM_LINUX || BX_PLATFORM_BSD
-    initparam.platformData.ndt = wmi.info.x11.display;
-    initparam.platformData.nwh = (void *)(uintptr_t)wmi.info.x11.window;
-#elif BX_PLATFORM_OSX
-    initparam.platformData.ndt = NULL;
-    initparam.platformData.nwh = cbSetupMetalLayer (wmi.info.cocoa.window);
-#elif BX_PLATFORM_WINDOWS
-    initparam.platformData.ndt = NULL;
-    initparam.platformData.nwh = SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
-                                                  SDL_PROP_WINDOW_WIN32_HWND_POINTER,
-                                                  NULL);
-#elif BX_PLATFORM_STEAMLINK
-    initparam.platformData.ndt = wmi.info.vivante.display;
-    initparam.platformData.nwh = wmi.info.vivante.window;
-#endif // BX_PLATFORM_
+    m_d->initParam.platformData.ndt = NULL;
+    m_d->initParam.platformData.nwh =
+        SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+                         SDL_PROP_WINDOW_WIN32_HWND_POINTER,
+                         NULL);
+
+    m_d->initParam.type = bgfx::RendererType::Vulkan; // auto choose renderer
+    m_d->initParam.resolution.width = 320;
+    m_d->initParam.resolution.height = 200;
+    m_d->initParam.resolution.reset = BGFX_RESET_VSYNC;
+    bgfx::init (m_d->initParam);
+
+    PLOGD << "Renderer type: " << bgfx::getRendererType ();
 
     PLOGD << "Create background Textures";
     m_d->backgroundTexture =
