@@ -68,20 +68,23 @@ bgfxHandle_t::bgfxHandle_t ()
 void bgfxHandle_t::init ()
 {
     PLOGD << "Init BGFX";
-
     m_d->initParam.platformData.ndt = NULL;
     m_d->initParam.platformData.nwh =
         SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
                          SDL_PROP_WINDOW_WIN32_HWND_POINTER,
                          NULL);
 
-    m_d->initParam.type = bgfx::RendererType::Vulkan; // auto choose renderer
+    m_d->initParam.type = bgfx::RendererType::OpenGL;
     m_d->initParam.resolution.width = 320;
     m_d->initParam.resolution.height = 200;
     m_d->initParam.resolution.reset = BGFX_RESET_VSYNC;
-    bgfx::init (m_d->initParam);
+    if (!bgfx::init (m_d->initParam))
+    {
+        PLOGF << "Failed to init bgfx";
+        return;
+    }
 
-    PLOGD << "Renderer type: " << bgfx::getRendererType ();
+    PLOGD << "Using renderer type: " << bgfx::getRendererName (bgfx::getRendererType ());
 
     PLOGD << "Create background Textures";
     m_d->backgroundTexture =
