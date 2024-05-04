@@ -1,5 +1,6 @@
 #include "bgfxHandle.h"
 #include "bgfxShader.h"
+#include "imgui_impl_bgfx.h"
 #include "osystem.h"
 
 #include <backends/imgui_impl_sdl3.h>
@@ -68,11 +69,38 @@ bgfxHandle_t::bgfxHandle_t ()
 void bgfxHandle_t::init ()
 {
     PLOGD << "Init BGFX";
+#if SDL_PLATFORM_WINDOWS
+    PLOGD << "Windows Platform";
     m_d->initParam.platformData.ndt = NULL;
     m_d->initParam.platformData.nwh =
         SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
                          SDL_PROP_WINDOW_WIN32_HWND_POINTER,
                          NULL);
+#elif SDL_PLATFORM_LINUX
+    PLOGD << "Linux Platform";
+    if (SDL_strcmp (SDL_GetCurrentVideoDriver (), "x11") == 0)
+    {
+        m_d->initParam.platformData.ndt =
+            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+                             SDL_PROP_WINDOW_X11_DISPLAY_POINTER,
+                             NULL);
+        m_d->initParam.platformData.nwh = (void *)(uintptr_t)(SDL_GetNumberProperty (
+            SDL_GetWindowProperties (GS ()->window),
+            SDL_PROP_WINDOW_X11_WINDOW_NUMBER,
+            0));
+    }
+    else if (SDL_strcmp (SDL_GetCurrentVideoDriver (), "wayland") == 0)
+    {
+        m_d->initParam.platformData.ndt =
+            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+                             SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER,
+                             NULL);
+        m_d->initParam.platformData.nwh =
+            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+                             SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER,
+                             NULL);
+    }
+#endif
 
     m_d->initParam.type = bgfx::RendererType::OpenGL;
     m_d->initParam.resolution.width = 320;
@@ -85,6 +113,13 @@ void bgfxHandle_t::init ()
     }
 
     PLOGD << "Using renderer type: " << bgfx::getRendererName (bgfx::getRendererType ());
+
+    PLOGD << "Init ImGui";
+    if (!ImGui_ImplSDL3_InitForOpenGL (GS ()->window, nullptr))
+    {
+        PLOGF << "Failed to init ImGui";
+        return;
+    }
 
     PLOGD << "Create background Textures";
     m_d->backgroundTexture =

@@ -79,6 +79,8 @@ void osystem_t::init (int argc_, char *argv_[])
         PLOGF << SDL_GetError ();
     }
 
+    SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
+
     GS ()->window = SDL_CreateWindow (
         "FITD", 1280, 960, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
