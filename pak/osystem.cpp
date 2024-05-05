@@ -60,6 +60,14 @@ void osystem_t::init (int argc_, char *argv_[])
     filesystem::current_path (filesystem::path (argv_[0]).parent_path ());
 
     printVersion ();
+
+    if constexpr (std::endian::native == std::endian::big)
+        PLOGD << "Big Endian";
+    else if constexpr (std::endian::native == std::endian::little)
+        PLOGD << "Little Endian";
+    else
+        PLOGD << "Mixed Endian";
+
     PLOGD << "Init SDL";
     if (SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK) !=
         0)
@@ -186,6 +194,6 @@ void osystem_t::loadPaks ()
         if (file.path ().extension () != ".PAK")
             continue;
 
-        GS ()->paks.insert ({file.path ().stem (), pak_t (file.path ())});
+        GS ()->paks.insert ({file.path ().stem ().string (), pak_t (file.path ())});
     }
 }

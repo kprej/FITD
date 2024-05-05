@@ -19,7 +19,7 @@ public:
     void shutdown ();
 
     void setPalette (std::vector<std::byte> const &palette_);
-    void copyTexture (std::vector<std::byte> const &texture_, int offest_);
+    void setBackground (std::vector<std::byte> const &texture_, int offest_);
 
 private:
     void startDebugFrame ();

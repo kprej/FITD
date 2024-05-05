@@ -224,7 +224,7 @@ void bgfxHandle_t::setPalette (vector<byte> const &palette_)
         m_d->paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy (palette_.data (), 256 * 3));
 }
 
-void bgfxHandle_t::copyTexture (vector<byte> const &texture_, int offset_)
+void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
 {
     bgfx::updateTexture2D (m_d->backgroundTexture,
                            0,
