@@ -1,6 +1,7 @@
 #include "osystem.h"
 #include "bgfxHandle.h"
 
+#include <backends/imgui_impl_sdl3.h>
 #include <bgfx/bgfx.h>
 
 #include <plog/Appenders/ColorConsoleAppender.h>
@@ -19,25 +20,17 @@ using namespace std;
 class osystem_t::private_t
 {
 public:
-    ~private_t () = default;
+    ~private_t () {}
 
     private_t ()
         : frameStart (0)
         , lastFrame (0)
-        , startOfRender (nullptr)
-        , endOfRender (nullptr)
-        , mainThread (nullptr)
         , bgfxHandle ()
     {
     }
 
     unsigned long frameStart;
     unsigned long lastFrame;
-
-    SDL_Semaphore *startOfRender;
-    SDL_Semaphore *endOfRender;
-
-    SDL_Thread *mainThread;
 
     bgfxHandle_t bgfxHandle;
 };
@@ -68,9 +61,6 @@ void osystem_t::init (int argc_, char *argv_[])
 
     filesystem::current_path (filesystem::path (argv_[0]).parent_path ());
 
-    m_d->startOfRender = SDL_CreateSemaphore (0);
-    m_d->endOfRender = SDL_CreateSemaphore (0);
-
     printVersion ();
     PLOGD << "Init SDL";
     if (SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_TIMER | SDL_INIT_JOYSTICK) !=
@@ -82,7 +72,7 @@ void osystem_t::init (int argc_, char *argv_[])
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
 
     GS ()->window = SDL_CreateWindow (
-        "FITD", 1280, 960, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+        "FITD", 1280, 800, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     if (!GS ()->window)
     {
@@ -92,10 +82,19 @@ void osystem_t::init (int argc_, char *argv_[])
     detectGame ();
 
     m_d->bgfxHandle.init ();
-    // m_d->mainThread = SDL_CreateThread (FitdMain, "FitdMainThread", NULL);
 
     m_d->frameStart = SDL_GetTicks ();
     m_d->lastFrame = m_d->frameStart;
+}
+
+bool osystem_t::run ()
+{
+    if (!handleInput ())
+        return false;
+
+    m_d->bgfxHandle.startFrame ();
+
+    return true;
 }
 
 void osystem_t::detectGame ()
@@ -157,4 +156,37 @@ void osystem_t::detectGame ()
     }
 
     PLOGF << "Game detection failed...";
+}
+
+bool osystem_t::handleInput ()
+{
+    SDL_Event event;
+
+    while (SDL_PollEvent (&event))
+    {
+        ImGui_ImplSDL3_ProcessEvent (&event);
+
+        switch (event.type)
+        {
+        case SDL_EVENT_KEY_DOWN:
+            if (event.key.keysym.scancode == SDL_SCANCODE_GRAVE)
+                GS ()->debugMenuDisplayed = !GS ()->debugMenuDisplayed;
+            break;
+        case SDL_EVENT_QUIT:
+            shutdown ();
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void osystem_t::shutdown ()
+{
+    PLOGD << "Begin shutdown event";
+    m_d->bgfxHandle.shutdown ();
+
+    PLOGD << "Shutdown SDL";
+    SDL_DestroyWindow (GS ()->window);
+    SDL_Quit ();
 }

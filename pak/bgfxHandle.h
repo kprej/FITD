@@ -15,6 +15,10 @@ public:
     void init ();
     void startFrame ();
 
+    void shutdown ();
+
+    void setPalette (std::array<std::byte, 768> const &palette_);
+
 private:
     void startDebugFrame ();
     void drawBackground ();

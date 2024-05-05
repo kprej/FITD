@@ -13,13 +13,16 @@
 // https://github.com/ocornut/imgui
 
 #include "imgui_impl_bgfx.h"
-#include "imgui.h"
+#include <imgui.h>
 
 // BGFX/BX
-#include "bgfx/bgfx.h"
-#include "bgfx/embedded_shader.h"
-#include "bx/math.h"
-#include "bx/timer.h"
+#include <bgfx/bgfx.h>
+#include <bgfx/embedded_shader.h>
+#include <bx/math.h>
+#include <bx/timer.h>
+
+#include "shaders/fs_ocornut_imgui.h.bin"
+#include "shaders/vs_ocornut_imgui.h.bin"
 
 // Data
 static uint8_t g_View = 255;
@@ -27,6 +30,11 @@ static bgfx::TextureHandle g_FontTexture = BGFX_INVALID_HANDLE;
 static bgfx::ProgramHandle g_ShaderHandle = BGFX_INVALID_HANDLE;
 static bgfx::UniformHandle g_AttribLocationTex = BGFX_INVALID_HANDLE;
 static bgfx::VertexLayout g_VertexLayout;
+
+static const bgfx::EmbeddedShader s_embeddedShaders[] = {
+    BGFX_EMBEDDED_SHADER (vs_ocornut_imgui),
+    BGFX_EMBEDDED_SHADER (fs_ocornut_imgui),
+    BGFX_EMBEDDED_SHADER_END ()};
 
 // This is the main rendering function that you have to implement and call after
 // ImGui::Render(). Pass ImGui::GetDrawData() to this function.
@@ -148,14 +156,6 @@ bool ImGui_Implbgfx_CreateFontsTexture ()
 
     return true;
 }
-
-#include "fs_ocornut_imgui.h.bin"
-#include "vs_ocornut_imgui.h.bin"
-
-static const bgfx::EmbeddedShader s_embeddedShaders[] = {
-    BGFX_EMBEDDED_SHADER (vs_ocornut_imgui),
-    BGFX_EMBEDDED_SHADER (fs_ocornut_imgui),
-    BGFX_EMBEDDED_SHADER_END ()};
 
 bool ImGui_Implbgfx_CreateDeviceObjects ()
 {

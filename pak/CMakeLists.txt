@@ -12,10 +12,14 @@ set(SHADERS
     )
 
 add_executable (pak
+    AITD.cpp
+    AITD.h
     bgfxHandle.cpp
     bgfxHandle.h
     bgfxShader.cpp
     bgfxShader.h
+    game.cpp
+    game.h
     imgui_impl_bgfx.cpp
     imgui_impl_bgfx.h
     main.cpp

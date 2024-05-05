@@ -15,7 +15,8 @@ using namespace std;
 class bgfxHandle_t::private_t
 {
 public:
-    ~private_t () = default;
+    ~private_t () {}
+
     private_t ()
         : initParam ()
         , backgroundTexture ()
@@ -59,7 +60,9 @@ public:
     backgroundMode_t backgroundMode;
 };
 
-bgfxHandle_t::~bgfxHandle_t () = default;
+bgfxHandle_t::~bgfxHandle_t ()
+{
+}
 
 bgfxHandle_t::bgfxHandle_t ()
     : m_d (make_unique<private_t> ())
@@ -106,6 +109,7 @@ void bgfxHandle_t::init ()
     m_d->initParam.resolution.width = 320;
     m_d->initParam.resolution.height = 200;
     m_d->initParam.resolution.reset = BGFX_RESET_VSYNC;
+
     if (!bgfx::init (m_d->initParam))
     {
         PLOGF << "Failed to init bgfx";
@@ -115,6 +119,9 @@ void bgfxHandle_t::init ()
     PLOGD << "Using renderer type: " << bgfx::getRendererName (bgfx::getRendererType ());
 
     PLOGD << "Init ImGui";
+    ImGui::CreateContext ();
+
+    ImGui_Implbgfx_Init (255);
     if (!ImGui_ImplSDL3_InitForOpenGL (GS ()->window, nullptr))
     {
         PLOGF << "Failed to init ImGui";
@@ -150,24 +157,10 @@ void bgfxHandle_t::startFrame ()
         bgfx::reset (GS ()->outputResolution[0], GS ()->outputResolution[1]);
     }
 
-    /*
+    ImGui_Implbgfx_NewFrame ();
     ImGui_ImplSDL3_NewFrame ();
 
-    // imguiBeginFrame (0, 0, 0, 0, outputResolution[0], outputResolution[1], -1);
-
-    if (ImGui::BeginMainMenuBar ())
-    {
-        ImGui::Text (" %.2f FPS (%.2f ms)",
-                     ImGui::GetIO ().Framerate,
-                     1000.0f / ImGui::GetIO ().Framerate);
-
-        ImGui::PushItemWidth (100);
-        ImGui::SliderFloat ("Volume", &gVolume, 0, 1);
-        ImGui::PopItemWidth ();
-
-        ImGui::EndMainMenuBar ();
-    }
-    */
+    ImGui::NewFrame ();
 
     bgfx::setViewRect (0, 0, 0, GS ()->outputResolution[0], GS ()->outputResolution[1]);
     bgfx::setViewClear (0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH);
@@ -194,13 +187,52 @@ void bgfxHandle_t::startFrame ()
 
     bgfx::touch (m_d->gameViewId);
 
+    ImGui::Render ();
+    ImGui_Implbgfx_RenderDrawLists (ImGui::GetDrawData ());
+    bgfx::frame ();
+
     drawBackground ();
+}
+
+void bgfxHandle_t::setPalette (array<byte, 768> const &palette_)
+{
+    bgfx::updateTexture2D (
+        m_d->paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy (palette_.data (), 256 * 3));
+}
+
+void bgfxHandle_t::shutdown ()
+{
+    PLOGD << "Destroy shaders";
+
+    bgfx::destroy (m_d->backgroundShader);
+    bgfx::destroy (m_d->maskBackgroundShader);
+    bgfx::destroy (m_d->flatShader);
+    bgfx::destroy (m_d->noiseShader);
+    bgfx::destroy (m_d->rampShader);
+
+    PLOGD << "Shutdown ImGui";
+    ImGui_ImplSDL3_Shutdown ();
+    ImGui_Implbgfx_Shutdown ();
+
+    ImGui::DestroyContext ();
+
+    PLOGD << "Shutdown BGFX";
+    bgfx::shutdown ();
 }
 
 void bgfxHandle_t::startDebugFrame ()
 {
+
+    if (ImGui::BeginMainMenuBar ())
+    {
+        ImGui::Text (" %.2f FPS (%.2f ms)",
+                     ImGui::GetIO ().Framerate,
+                     1000.0f / ImGui::GetIO ().Framerate);
+
+        ImGui::EndMainMenuBar ();
+    }
     m_d->gameViewId = 1;
-    /*
+
     if (ImGui::Begin ("Game"))
     {
         ImVec2 currentWindowSize = ImGui::GetContentRegionAvail ();
@@ -216,7 +248,6 @@ void bgfxHandle_t::startDebugFrame ()
     }
     ImGui::End ();
 
-    */
     if ((m_d->gameResolution[0] != m_d->oldWindowSize[0]) ||
         (m_d->gameResolution[1] != m_d->oldWindowSize[1]))
     {
