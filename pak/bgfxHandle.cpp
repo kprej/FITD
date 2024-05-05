@@ -6,6 +6,7 @@
 #include <backends/imgui_impl_sdl3.h>
 #include <bgfx/platform.h>
 #include <imgui.h>
+#include <plog/Helpers/HexDump.h>
 
 #include <plog/Log.h>
 
@@ -19,8 +20,10 @@ public:
 
     private_t ()
         : initParam ()
-        , backgroundTexture ()
-        , paletteTexture ()
+        , backgroundTexture (BGFX_INVALID_HANDLE)
+        , paletteTexture (BGFX_INVALID_HANDLE)
+        , backgroundTextureUniform (BGFX_INVALID_HANDLE)
+        , paletteTextureUniform (BGFX_INVALID_HANDLE)
         , fieldModelInspectorFB (BGFX_INVALID_HANDLE)
         , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
         , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
@@ -41,6 +44,9 @@ public:
     bgfx::TextureHandle backgroundTexture;
     bgfx::TextureHandle paletteTexture;
 
+    bgfx::UniformHandle backgroundTextureUniform;
+    bgfx::UniformHandle paletteTextureUniform;
+
     // Debug Bits
     bgfx::FrameBufferHandle fieldModelInspectorFB;
     bgfx::TextureHandle fieldModelInspectorTexture;
@@ -58,6 +64,13 @@ public:
 
     uint8_t gameViewId;
     backgroundMode_t backgroundMode;
+
+    array<byte, 64000> physicalScreen;
+    array<byte, 192000> physicalScreenRGB;
+
+    int outputResolution[2];
+    SDL_Window *window;
+    array<byte, 768> currentPalette;
 };
 
 bgfxHandle_t::~bgfxHandle_t ()
@@ -71,35 +84,43 @@ bgfxHandle_t::bgfxHandle_t ()
 
 void bgfxHandle_t::init ()
 {
+    PLOGD << "Create window";
+    m_d->window = SDL_CreateWindow (toString (GS ()->gameId).c_str (),
+                                    1280,
+                                    800,
+                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+
+    if (!m_d->window)
+    {
+        PLOGF << SDL_GetError ();
+        return;
+    }
+
     PLOGD << "Init BGFX";
 #if SDL_PLATFORM_WINDOWS
     PLOGD << "Windows Platform";
     m_d->initParam.platformData.ndt = NULL;
-    m_d->initParam.platformData.nwh =
-        SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
-                         SDL_PROP_WINDOW_WIN32_HWND_POINTER,
-                         NULL);
+    m_d->initParam.platformData.nwh = SDL_GetProperty (
+        SDL_GetWindowProperties (m_d->window), SDL_PROP_WINDOW_WIN32_HWND_POINTER, NULL);
 #elif SDL_PLATFORM_LINUX
     PLOGD << "Linux Platform";
     if (SDL_strcmp (SDL_GetCurrentVideoDriver (), "x11") == 0)
     {
         m_d->initParam.platformData.ndt =
-            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+            SDL_GetProperty (SDL_GetWindowProperties (m_d->window),
                              SDL_PROP_WINDOW_X11_DISPLAY_POINTER,
                              NULL);
         m_d->initParam.platformData.nwh = (void *)(uintptr_t)(SDL_GetNumberProperty (
-            SDL_GetWindowProperties (GS ()->window),
-            SDL_PROP_WINDOW_X11_WINDOW_NUMBER,
-            0));
+            SDL_GetWindowProperties (m_d->window), SDL_PROP_WINDOW_X11_WINDOW_NUMBER, 0));
     }
     else if (SDL_strcmp (SDL_GetCurrentVideoDriver (), "wayland") == 0)
     {
         m_d->initParam.platformData.ndt =
-            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+            SDL_GetProperty (SDL_GetWindowProperties (m_d->window),
                              SDL_PROP_WINDOW_WAYLAND_DISPLAY_POINTER,
                              NULL);
         m_d->initParam.platformData.nwh =
-            SDL_GetProperty (SDL_GetWindowProperties (GS ()->window),
+            SDL_GetProperty (SDL_GetWindowProperties (m_d->window),
                              SDL_PROP_WINDOW_WAYLAND_SURFACE_POINTER,
                              NULL);
     }
@@ -122,7 +143,7 @@ void bgfxHandle_t::init ()
     ImGui::CreateContext ();
 
     ImGui_Implbgfx_Init (255);
-    if (!ImGui_ImplSDL3_InitForOpenGL (GS ()->window, nullptr))
+    if (!ImGui_ImplSDL3_InitForOpenGL (m_d->window, nullptr))
     {
         PLOGF << "Failed to init ImGui";
         return;
@@ -133,6 +154,10 @@ void bgfxHandle_t::init ()
         bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
     m_d->paletteTexture =
         bgfx::createTexture2D (3, 256, false, 1, bgfx::TextureFormat::R8U);
+    m_d->backgroundTextureUniform =
+        bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
+    m_d->paletteTextureUniform =
+        bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
 
     PLOGD << "Load shaders";
     m_d->backgroundShader = loadProgram ("background");
@@ -145,16 +170,15 @@ void bgfxHandle_t::init ()
 void bgfxHandle_t::startFrame ()
 {
     int oldResolution[2];
-    oldResolution[0] = GS ()->outputResolution[0];
-    oldResolution[1] = GS ()->outputResolution[1];
+    oldResolution[0] = m_d->outputResolution[0];
+    oldResolution[1] = m_d->outputResolution[1];
 
-    SDL_GetWindowSize (
-        GS ()->window, &GS ()->outputResolution[0], &GS ()->outputResolution[1]);
+    SDL_GetWindowSize (m_d->window, &m_d->outputResolution[0], &m_d->outputResolution[1]);
 
-    if ((oldResolution[0] != GS ()->outputResolution[0]) ||
-        (oldResolution[1] != GS ()->outputResolution[1]))
+    if ((oldResolution[0] != m_d->outputResolution[0]) ||
+        (oldResolution[1] != m_d->outputResolution[1]))
     {
-        bgfx::reset (GS ()->outputResolution[0], GS ()->outputResolution[1]);
+        bgfx::reset (m_d->outputResolution[0], m_d->outputResolution[1]);
     }
 
     ImGui_Implbgfx_NewFrame ();
@@ -162,7 +186,7 @@ void bgfxHandle_t::startFrame ()
 
     ImGui::NewFrame ();
 
-    bgfx::setViewRect (0, 0, 0, GS ()->outputResolution[0], GS ()->outputResolution[1]);
+    bgfx::setViewRect (0, 0, 0, m_d->outputResolution[0], m_d->outputResolution[1]);
     bgfx::setViewClear (0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH);
     bgfx::touch (0);
     m_d->oldWindowSize = {-1, -1};
@@ -174,8 +198,8 @@ void bgfxHandle_t::startFrame ()
     else
     {
         m_d->gameViewId = 0;
-        m_d->gameResolution[0] = GS ()->outputResolution[0];
-        m_d->gameResolution[1] = GS ()->outputResolution[1];
+        m_d->gameResolution[0] = m_d->outputResolution[0];
+        m_d->gameResolution[1] = m_d->outputResolution[1];
         bgfx::setViewFrameBuffer (m_d->gameViewId,
                                   BGFX_INVALID_HANDLE); // bind the backbuffer
     }
@@ -194,10 +218,22 @@ void bgfxHandle_t::startFrame ()
     drawBackground ();
 }
 
-void bgfxHandle_t::setPalette (array<byte, 768> const &palette_)
+void bgfxHandle_t::setPalette (vector<byte> const &palette_)
 {
     bgfx::updateTexture2D (
         m_d->paletteTexture, 0, 0, 0, 0, 3, 256, bgfx::copy (palette_.data (), 256 * 3));
+}
+
+void bgfxHandle_t::copyTexture (vector<byte> const &texture_, int offset_)
+{
+    bgfx::updateTexture2D (m_d->backgroundTexture,
+                           0,
+                           0,
+                           0,
+                           0,
+                           320,
+                           200,
+                           bgfx::copy (texture_.data () + offset_, 320 * 200));
 }
 
 void bgfxHandle_t::shutdown ()
@@ -218,6 +254,8 @@ void bgfxHandle_t::shutdown ()
 
     PLOGD << "Shutdown BGFX";
     bgfx::shutdown ();
+
+    SDL_DestroyWindow (m_d->window);
 }
 
 void bgfxHandle_t::startDebugFrame ()
@@ -361,24 +399,11 @@ void bgfxHandle_t::drawBackground ()
     pVertices->texcoord[1] = 1.f;
     pVertices++;
 
-    static bgfx::UniformHandle backgroundTextureUniform = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid (backgroundTextureUniform))
-    {
-        backgroundTextureUniform =
-            bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
-    }
-    static bgfx::UniformHandle paletteTextureUniform = BGFX_INVALID_HANDLE;
-    if (!bgfx::isValid (paletteTextureUniform))
-    {
-        paletteTextureUniform =
-            bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
-    }
-
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_MSAA);
 
     bgfx::setVertexBuffer (0, &transientBuffer);
 
-    bgfx::setTexture (0, backgroundTextureUniform, m_d->backgroundTexture);
-    bgfx::setTexture (1, paletteTextureUniform, m_d->paletteTexture);
+    bgfx::setTexture (0, m_d->backgroundTextureUniform, m_d->backgroundTexture);
+    bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
     bgfx::submit (m_d->gameViewId, m_d->backgroundShader);
 }

@@ -35,4 +35,6 @@ public:
 private:
     void _start () final;
     void _readBook (int index_, int type_) final;
+
+    void makeIntroScreens ();
 };

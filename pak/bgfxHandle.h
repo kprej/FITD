@@ -5,6 +5,7 @@
 #include <SDL3/SDL.h>
 
 #include <memory>
+#include <vector>
 
 class bgfxHandle_t
 {
@@ -17,13 +18,13 @@ public:
 
     void shutdown ();
 
-    void setPalette (std::array<std::byte, 768> const &palette_);
+    void setPalette (std::vector<std::byte> const &palette_);
+    void copyTexture (std::vector<std::byte> const &texture_, int offest_);
 
 private:
     void startDebugFrame ();
     void drawBackground ();
 
     class private_t;
-
     std::unique_ptr<private_t> m_d;
 };

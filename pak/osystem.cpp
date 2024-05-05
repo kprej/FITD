@@ -1,4 +1,5 @@
 #include "osystem.h"
+#include "AITD.h"
 #include "bgfxHandle.h"
 
 #include <backends/imgui_impl_sdl3.h>
@@ -25,14 +26,11 @@ public:
     private_t ()
         : frameStart (0)
         , lastFrame (0)
-        , bgfxHandle ()
     {
     }
 
     unsigned long frameStart;
     unsigned long lastFrame;
-
-    bgfxHandle_t bgfxHandle;
 };
 
 shared_ptr<gameState_t> osystem_t::GS ()
@@ -57,7 +55,7 @@ osystem_t::osystem_t ()
 void osystem_t::init (int argc_, char *argv_[])
 {
     static plog::ColorConsoleAppender<plog::TxtFormatter> consoleAppender;
-    plog::init (plog::verbose, &consoleAppender);
+    plog::init (plog::debug, &consoleAppender);
 
     filesystem::current_path (filesystem::path (argv_[0]).parent_path ());
 
@@ -71,17 +69,10 @@ void osystem_t::init (int argc_, char *argv_[])
 
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
 
-    GS ()->window = SDL_CreateWindow (
-        "FITD", 1280, 800, SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
-
-    if (!GS ()->window)
-    {
-        PLOGF << SDL_GetError ();
-    }
-
     detectGame ();
+    loadPaks ();
 
-    m_d->bgfxHandle.init ();
+    GS ()->handle.init ();
 
     m_d->frameStart = SDL_GetTicks ();
     m_d->lastFrame = m_d->frameStart;
@@ -92,7 +83,8 @@ bool osystem_t::run ()
     if (!handleInput ())
         return false;
 
-    m_d->bgfxHandle.startFrame ();
+    GS ()->game->start ();
+    GS ()->handle.startFrame ();
 
     return true;
 }
@@ -107,7 +99,8 @@ void osystem_t::detectGame ()
         GS ()->CVars.resize (45);
         // currentCVarTable = AITD1Knownm_d->CVars;
 
-        SDL_SetWindowTitle (GS ()->window, "Alone in the Dark");
+        GS ()->game = make_unique<aitd_t> ();
+
         return;
     }
     else if (filesystem::exists ("PERE.PAK"))
@@ -118,7 +111,6 @@ void osystem_t::detectGame ()
         GS ()->CVars.resize (70);
         // currentCVarTable = AITD2KnownGS ()->CVars;
 
-        SDL_SetWindowTitle (GS ()->window, "Jack in the Dark");
         return;
     }
     else if (filesystem::exists ("MER.PAK"))
@@ -129,7 +121,6 @@ void osystem_t::detectGame ()
         GS ()->CVars.resize (70);
         // currentCVarTable = AITD2KnownGS ()->CVars;
 
-        SDL_SetWindowTitle (GS ()->window, "Alone in the Dark 2");
         return;
     }
     else if (filesystem::exists ("AN1.PAK"))
@@ -140,7 +131,6 @@ void osystem_t::detectGame ()
         GS ()->CVars.resize (70);
         // currentCVarTable = AITD2KnownGS ()->CVars;
 
-        SDL_SetWindowTitle (GS ()->window, "Alone in the Dark 3");
         return;
     }
     else if (filesystem::exists ("PURSUIT.PAK"))
@@ -151,7 +141,6 @@ void osystem_t::detectGame ()
         GS ()->CVars.resize (100); // TODO: figure this
         // currentCVarTable = AITD2KnownGS ()->CVars; // TODO: figure this
 
-        SDL_SetWindowTitle (GS ()->window, "Time Gate");
         return;
     }
 
@@ -184,9 +173,19 @@ bool osystem_t::handleInput ()
 void osystem_t::shutdown ()
 {
     PLOGD << "Begin shutdown event";
-    m_d->bgfxHandle.shutdown ();
+    GS ()->handle.shutdown ();
 
     PLOGD << "Shutdown SDL";
-    SDL_DestroyWindow (GS ()->window);
     SDL_Quit ();
+}
+
+void osystem_t::loadPaks ()
+{
+    for (auto const &file : filesystem::directory_iterator {filesystem::current_path ()})
+    {
+        if (file.path ().extension () != ".PAK")
+            continue;
+
+        GS ()->paks.insert ({file.path ().stem (), pak_t (file.path ())});
+    }
 }

@@ -5,7 +5,6 @@
 #include <plog/Helpers/HexDump.h>
 #include <plog/Log.h>
 
-#include <filesystem>
 #include <fstream>
 #include <list>
 #include <string>
@@ -87,6 +86,11 @@ void pakInfo_t::init (fstream &file_, uint8_t index_)
     unpak (file_);
 }
 
+vector<byte> const &pakInfo_t::data () const
+{
+    return m_d->data;
+}
+
 void pakInfo_t::unpak (fstream &file_)
 {
     switch (m_d->compressionFlag)
@@ -154,25 +158,24 @@ void pakInfo_t::sanitizeName ()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-pak_t::~pak_t () = default;
-pak_t::pak_t (string const &file_)
-    : m_file (file_)
-    , m_paks ()
+class pak_t::private_t
 {
-}
-
-void pak_t::init ()
-{
-    if (!filesystem::exists (m_file))
+public:
+    ~private_t () = default;
+    private_t ()
+        : paks ()
     {
-        PLOGF << "File not found: " << m_file;
     }
 
-    filesystem::path fileP (m_file);
+    vector<pakInfo_t> paks;
+};
+pak_t::~pak_t () = default;
+pak_t::pak_t (filesystem::path const &file_)
+    : m_d (make_shared<private_t> ())
+{
+    PLOGD << filesystem::absolute (file_).string ();
 
-    PLOGD << filesystem::absolute (fileP).string ();
-
-    fstream iFile (filesystem::absolute (fileP).string (), ios::binary | ios::in);
+    fstream iFile (filesystem::absolute (file_).string (), ios::binary | ios::in);
 
     iFile.seekg (4, ios::cur);
 
@@ -183,13 +186,13 @@ void pak_t::init ()
 
     PLOGD << "File Count: " << to_string (iFileCount);
 
-    m_paks.resize (iFileCount);
+    m_d->paks.resize (iFileCount);
 
     uint8_t index = 1;
     int32_t additionalDescriptorSize;
-    for (auto &pak : m_paks)
+    for (auto &pak : m_d->paks)
     {
-        PLOGD << "Reading Pak " << to_string (index);
+        PLOGV << "Reading Pak " << to_string (index);
         // Goto PAK at index
         iFile.seekg (index * 4);
 
@@ -207,4 +210,9 @@ void pak_t::init ()
 
         ++index;
     }
+}
+
+vector<byte> const &pak_t::data (uint8_t index_) const
+{
+    return m_d->paks.at (index_).data ();
 }

@@ -27,6 +27,8 @@ add_executable (pak
     osystem.h
     pakFile.cpp
     pakFile.h
+    types.cpp
+    types.h
     unpack.cpp
     unpack.h
     ${SHADERS}

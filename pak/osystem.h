@@ -1,4 +1,6 @@
 #pragma once
+#include "bgfxHandle.h"
+#include "game.h"
 #include "pakFile.h"
 #include "types.h"
 
@@ -16,12 +18,11 @@ struct gameState_t
     bool debugMenuDisplayed;
     bool shutdown;
     std::vector<int16_t> CVars;
-    int outputResolution[2];
-    SDL_Window *window;
-
-    std::array<std::byte, 768> currentPalette;
-
     std::map<std::string, pak_t> paks;
+
+    std::unique_ptr<game_t> game;
+
+    bgfxHandle_t handle;
 };
 
 class osystem_t
@@ -40,6 +41,7 @@ private:
     void detectGame ();
     bool handleInput ();
     void shutdown ();
+    void loadPaks ();
 
     class private_t;
     std::unique_ptr<private_t> m_d;

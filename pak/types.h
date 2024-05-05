@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 enum class gameId_t
 {
     AITD1,
@@ -8,6 +10,8 @@ enum class gameId_t
     AITD3,
     TIMEGATE,
 };
+
+extern std::string toString (gameId_t id_);
 
 enum class backgroundMode_t
 {
