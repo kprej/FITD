@@ -88,7 +88,8 @@ void bgfxHandle_t::init ()
     m_d->window = SDL_CreateWindow (toString (GS ()->gameId).c_str (),
                                     1280,
                                     800,
-                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+                                    SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY |
+                                        SDL_WINDOW_HIDDEN);
 
     if (!m_d->window)
     {
@@ -126,10 +127,12 @@ void bgfxHandle_t::init ()
     }
 #endif
 
-    m_d->initParam.type = bgfx::RendererType::OpenGL;
+    m_d->initParam.type = bgfx::RendererType::Vulkan;
     m_d->initParam.resolution.width = 320;
     m_d->initParam.resolution.height = 200;
     m_d->initParam.resolution.reset = BGFX_RESET_VSYNC;
+
+    auto caps = bgfx::getCaps ();
 
     if (!bgfx::init (m_d->initParam))
     {
@@ -165,6 +168,8 @@ void bgfxHandle_t::init ()
     m_d->flatShader = loadProgram ("flat");
     m_d->noiseShader = loadProgram ("noise");
     m_d->rampShader = loadProgram ("ramp");
+
+    SDL_ShowWindow (m_d->window);
 }
 
 void bgfxHandle_t::startFrame ()
@@ -178,7 +183,8 @@ void bgfxHandle_t::startFrame ()
     if ((oldResolution[0] != m_d->outputResolution[0]) ||
         (oldResolution[1] != m_d->outputResolution[1]))
     {
-        bgfx::reset (m_d->outputResolution[0], m_d->outputResolution[1]);
+        bgfx::reset (
+            m_d->outputResolution[0], m_d->outputResolution[1], BGFX_RESET_HIDPI);
     }
 
     ImGui_Implbgfx_NewFrame ();
