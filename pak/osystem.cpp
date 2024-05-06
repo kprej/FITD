@@ -91,8 +91,9 @@ bool osystem_t::run ()
     if (!handleInput ())
         return false;
 
-    GS ()->game->start ();
     GS ()->handle.startFrame ();
+    GS ()->game->start ();
+    GS ()->handle.endFrame ();
 
     return true;
 }

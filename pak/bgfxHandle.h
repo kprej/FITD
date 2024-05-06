@@ -15,6 +15,7 @@ public:
 
     void init ();
     void startFrame ();
+    void endFrame ();
 
     void shutdown ();
 

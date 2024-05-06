@@ -201,14 +201,12 @@ void bgfxHandle_t::startFrame ()
     {
         startDebugFrame ();
     }
-    else
-    {
-        m_d->gameViewId = 0;
-        m_d->gameResolution[0] = m_d->outputResolution[0];
-        m_d->gameResolution[1] = m_d->outputResolution[1];
-        bgfx::setViewFrameBuffer (m_d->gameViewId,
-                                  BGFX_INVALID_HANDLE); // bind the backbuffer
-    }
+
+    m_d->gameViewId = 0;
+    m_d->gameResolution[0] = m_d->outputResolution[0];
+    m_d->gameResolution[1] = m_d->outputResolution[1];
+    bgfx::setViewFrameBuffer (m_d->gameViewId,
+                              BGFX_INVALID_HANDLE); // bind the backbuffer
 
     bgfx::setViewClear (m_d->gameViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
 
@@ -217,11 +215,16 @@ void bgfxHandle_t::startFrame ()
 
     bgfx::touch (m_d->gameViewId);
 
-    ImGui::Render ();
-    ImGui_Implbgfx_RenderDrawLists (ImGui::GetDrawData ());
-    bgfx::frame ();
-
     drawBackground ();
+}
+
+void bgfxHandle_t::endFrame ()
+{
+    ImGui::Render ();
+
+    ImGui_Implbgfx_RenderDrawLists (ImGui::GetDrawData ());
+
+    bgfx::frame ();
 }
 
 void bgfxHandle_t::setPalette (vector<byte> const &palette_)
@@ -327,6 +330,7 @@ void bgfxHandle_t::startDebugFrame ()
         m_d->fieldModelInspectorFB = bgfx::createFrameBuffer (2, &attachements[0], true);
     }
     bgfx::setViewFrameBuffer (m_d->gameViewId, m_d->fieldModelInspectorFB);
+
     bgfx::setViewRect (
         m_d->gameViewId, 0, 0, m_d->gameResolution[0], m_d->gameResolution[1]);
 }
