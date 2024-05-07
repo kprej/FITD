@@ -43,9 +43,8 @@ pakInfo_t::pakInfo_t ()
 {
 }
 
-void pakInfo_t::init (fstream &file_, uint8_t index_)
+void pakInfo_t::init (fstream &file_)
 {
-    m_d->index = index_;
     auto initPos = file_.tellg ();
 
     file_.read (reinterpret_cast<char *> (&m_d->diskSize), 4);
@@ -206,7 +205,7 @@ pak_t::pak_t (filesystem::path const &file_)
         iFile.read (reinterpret_cast<char *> (&additionalDescriptorSize), 4);
 
         // Read PAK info
-        pak.init (iFile, index);
+        pak.init (iFile);
 
         ++index;
     }

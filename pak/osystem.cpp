@@ -77,8 +77,8 @@ void osystem_t::init (int argc_, char *argv_[])
 
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
 
-    detectGame ();
     loadPaks ();
+    detectGame ();
 
     GS ()->handle.init ();
 

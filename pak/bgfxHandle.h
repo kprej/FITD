@@ -1,5 +1,7 @@
 #pragma once
 
+#include "body.h"
+
 #include <bgfx/bgfx.h>
 
 #include <SDL3/SDL.h>
@@ -21,6 +23,8 @@ public:
 
     void setPalette (std::vector<std::byte> const &palette_);
     void setBackground (std::vector<std::byte> const &texture_, int offest_);
+
+    void drawBody (body_t const &body_);
 
 private:
     void startDebugFrame ();

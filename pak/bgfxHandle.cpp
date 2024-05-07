@@ -245,6 +245,12 @@ void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
                            bgfx::copy (texture_.data () + offset_, 320 * 200));
 }
 
+void bgfxHandle_t::drawBody (body_t const &body_)
+{
+    bgfx::setVertexBuffer (0, body_.vertexBuffer ());
+    bgfx::submit (0, m_d->flatShader);
+}
+
 void bgfxHandle_t::shutdown ()
 {
     PLOGD << "Destroy shaders";

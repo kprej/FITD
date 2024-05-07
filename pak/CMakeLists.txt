@@ -18,6 +18,9 @@ add_executable (pak
     bgfxHandle.h
     bgfxShader.cpp
     bgfxShader.h
+    body.cpp
+    body.h
+    buffer.h
     game.cpp
     game.h
     imgui_impl_bgfx.cpp

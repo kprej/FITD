@@ -2,6 +2,8 @@
 
 #include "game.h"
 
+#include <memory>
+
 class aitd_t : public game_t
 {
 public:
@@ -42,5 +44,10 @@ private:
     void _start () final;
     void _readBook (int index_, int type_) final;
 
+    void drawBox (int x_, int y_, int width_, int height_);
+
     void makeIntroScreens ();
+
+    class private_t;
+    std::shared_ptr<private_t> m_d;
 };

@@ -12,7 +12,7 @@ public:
     ~pakInfo_t ();
     pakInfo_t ();
 
-    void init (std::fstream &file_, uint8_t index_);
+    void init (std::fstream &file_);
 
     std::vector<std::byte> const &data () const;
 
