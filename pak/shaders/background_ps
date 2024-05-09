@@ -4,6 +4,7 @@ $input v_texcoord0
 
 highp USAMPLER2D(s_backgroundTexture, 0);
 highp USAMPLER2D(s_paletteTexture, 1);
+uniform vec4 s_alpha;
 
 void main()
 {
@@ -11,5 +12,5 @@ void main()
     gl_FragColor.r = (texelFetch(s_paletteTexture, ivec2(0, rawTexel.r), 0) / 255.f).r;
     gl_FragColor.g = (texelFetch(s_paletteTexture, ivec2(1, rawTexel.r), 0) / 255.f).r;
     gl_FragColor.b = (texelFetch(s_paletteTexture, ivec2(2, rawTexel.r), 0) / 255.f).r;
-    gl_FragColor.a = 1.f;
+    gl_FragColor.a = s_alpha;
 }

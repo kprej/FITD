@@ -1,8 +1,15 @@
 #include "body.h"
 #include "buffer.h"
+#include "osystem.h"
 #include "types.h"
 
 #include <plog/Log.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <cassert>
 using namespace std;
@@ -21,7 +28,11 @@ enum infoFlags_t
 class body_t::private_t
 {
 public:
-    ~private_t () = default;
+    ~private_t ()
+    {
+        bgfx::destroy (vBuffer);
+        bgfx::destroy (iBuffer);
+    }
     private_t () {}
 
     uint16_t flags;
@@ -33,8 +44,15 @@ public:
     vector<sPrimitive> primitives;
 
     vector<raw_t> raw;
+    vector<uint16_t> points;
 
-    bgfx::VertexBufferHandle buffer;
+    bgfx::VertexBufferHandle vBuffer;
+    bgfx::IndexBufferHandle iBuffer;
+
+    vector<byte> palette;
+
+    glm::quat rotation;
+    glm::vec3 position;
 };
 
 body_t::~body_t () = default;
@@ -68,10 +86,7 @@ void body_t::parseData (vector<byte> const &data_)
         vert.x = bodyBuffer.get<int16_t> ();
         vert.y = bodyBuffer.get<int16_t> ();
         vert.z = bodyBuffer.get<int16_t> ();
-
-        m_d->raw.push_back ({{float (vert.x), float (vert.y), float (vert.z)}, {0, 0}});
-
-        PLOGD << vert.x << " " << vert.y << " " << vert.z;
+        m_d->raw.push_back ({{float (vert.x), float (vert.y), float (vert.z)}, 0});
     }
 
     if (m_d->flags & ANIM)
@@ -151,7 +166,10 @@ void body_t::parseData (vector<byte> const &data_)
             primitive.m_points.resize (2);
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case Poly:
@@ -160,8 +178,18 @@ void body_t::parseData (vector<byte> const &data_)
             primitive.m_color = bodyBuffer.get<uint8_t> ();
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
+
+            if (primitive.m_points.size () > 3)
+            {
+                m_d->points.push_back (primitive.m_points[0]);
+                m_d->points.push_back (primitive.m_points[2]);
+            }
+
             break;
         case Point:
         case BigPoint:
@@ -172,7 +200,10 @@ void body_t::parseData (vector<byte> const &data_)
             primitive.m_points.resize (1);
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case Sphere:
@@ -183,26 +214,37 @@ void body_t::parseData (vector<byte> const &data_)
             primitive.m_points.resize (1);
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case PolyTexture8:
+            PLOGD << "PLY TEX 8";
             primitive.m_points.resize (bodyBuffer.get<uint8_t> ());
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
             primitive.m_color = bodyBuffer.get<uint8_t> ();
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case PolyTexture9:
         case PolyTexture10:
+            PLOGD << "PLY TEX 10/9";
             primitive.m_points.resize (bodyBuffer.get<uint8_t> ());
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
             primitive.m_color = bodyBuffer.get<uint8_t> ();
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
-                primitive.m_points[j] = bodyBuffer.get<uint16_t> () / 6;
+                uint16_t point = bodyBuffer.get<uint16_t> () / 6;
+                primitive.m_points[j] = point;
+                m_d->points.push_back (primitive.m_points[j]);
+                m_d->raw[point].color = primitive.m_color;
             }
             // load UVS?
             for (int j = 0; j < primitive.m_points.size (); j++)
@@ -217,17 +259,49 @@ void body_t::parseData (vector<byte> const &data_)
         }
     }
 
-    bgfx::VertexLayout layout;
-    layout.begin ()
-        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .end ();
+    m_d->vBuffer = bgfx::createVertexBuffer (
+        bgfx::makeRef (m_d->raw.data (), sizeof (raw_t) * m_d->raw.size ()),
+        GS ()->handle.bodyVertexLayout ());
 
-    m_d->buffer = bgfx::createVertexBuffer (
-        bgfx::makeRef (m_d->raw.data (), sizeof (raw_t) * m_d->raw.size ()), layout);
+    m_d->iBuffer = bgfx::createIndexBuffer (
+        bgfx::makeRef (m_d->points.data (), sizeof (uint16_t) * m_d->points.size ()));
+}
+
+void body_t::rotateX (float x_)
+{
+    m_d->rotation *= glm::angleAxis (glm::radians (x_), glm::vec3 (1.0f, 0.0f, 0.0f));
+}
+
+void body_t::rotateY (float y_)
+{
+    m_d->rotation *= glm::angleAxis (glm::radians (y_), glm::vec3 (0.0f, 1.0f, 0.0f));
+}
+
+void body_t::rotateZ (float z_)
+{
+    m_d->rotation *= glm::angleAxis (glm::radians (z_), glm::vec3 (0.0f, 0.0f, 1.0f));
+}
+
+void body_t::pos (float x_, float y_, float z_)
+{
+    m_d->position = glm::vec3 (x_, y_, z_);
 }
 
 bgfx::VertexBufferHandle const &body_t::vertexBuffer () const
 {
-    return m_d->buffer;
+    return m_d->vBuffer;
+}
+
+bgfx::IndexBufferHandle const &body_t::indexBuffer () const
+{
+    return m_d->iBuffer;
+}
+
+glm::mat4 body_t::transform ()
+{
+    glm::mat4 mat (1.0f);
+
+    mat = glm::translate (mat, m_d->position) * glm::toMat4 (m_d->rotation);
+
+    return mat;
 }

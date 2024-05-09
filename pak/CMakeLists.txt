@@ -25,6 +25,8 @@ add_executable (pak
     game.h
     imgui_impl_bgfx.cpp
     imgui_impl_bgfx.h
+    introScene.cpp
+    introScene.h
     main.cpp
     osystem.cpp
     osystem.h
@@ -37,4 +39,4 @@ add_executable (pak
     ${SHADERS}
     )
 
-target_link_libraries(pak bgfx bx imgui plog SDL3::SDL3 zlib)
+target_link_libraries(pak bgfx bx glm imgui plog SDL3::SDL3 zlib)

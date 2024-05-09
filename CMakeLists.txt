@@ -19,8 +19,8 @@ set(SDL_SHARED TRUE CACHE BOOL "Build a SDL shared library (if available)")
 set(SDL_STATIC TRUE CACHE BOOL "Build a SDL static library (if available)")
 
 set(BGFX_OPENGL_VERSION 46)
-
 FetchContent_Declare(bgfx GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git GIT_TAG master)
+FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
 FetchContent_Declare(iconfontheader GIT_REPOSITORY https://github.com/juliettef/IconFontCppHeaders.git GIT_TAG main)
 FetchContent_Declare(plog GIT_REPOSITORY https://github.com/SergiusTheBest/plog)
 FetchContent_Declare(SDL GIT_REPOSITORY https://github.com/libsdl-org/SDL GIT_TAG main)
@@ -28,6 +28,7 @@ FetchContent_Declare(soloud GIT_REPOSITORY https://github.com/jarikomppa/soloud.
 FetchContent_Declare(zlib GIT_REPOSITORY https://github.com/madler/zlib.git GIT_TAG master)
 
 FetchContent_MakeAvailable(bgfx)
+FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(iconfontheader)
 FetchContent_MakeAvailable(plog)
 FetchContent_MakeAvailable(SDL)

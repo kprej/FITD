@@ -9,6 +9,14 @@
 #include <memory>
 #include <vector>
 
+enum class backgroundState_t
+{
+    VISIBLE,
+    INVISIBLE,
+    FADING_IN,
+    FADING_OUT,
+};
+
 class bgfxHandle_t
 {
 public:
@@ -22,9 +30,15 @@ public:
     void shutdown ();
 
     void setPalette (std::vector<std::byte> const &palette_);
-    void setBackground (std::vector<std::byte> const &texture_, int offest_);
+    void setBackground (std::vector<std::byte> const &texture_, int offest_ = 0);
 
+    void fadeInBackground (float step_);
+    void fadeOutBackground (float step_);
     void drawBody (body_t const &body_);
+
+    backgroundState_t backgroundState () const;
+
+    bgfx::VertexLayout const &bodyVertexLayout () const;
 
 private:
     void startDebugFrame ();

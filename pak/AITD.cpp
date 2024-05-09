@@ -1,5 +1,6 @@
 #include "AITD.h"
 #include "body.h"
+#include "introScene.h"
 #include "osystem.h"
 #include "pakFile.h"
 
@@ -13,11 +14,12 @@ class aitd_t::private_t
 public:
     ~private_t () = default;
     private_t ()
-        : bodies ()
+        : state (state_t::INTRO_TATOU)
     {
     }
 
-    map<std::string, body_t> bodies;
+    state_t state;
+    introScene_t intro;
 };
 
 aitd_t::~aitd_t ()
@@ -27,14 +29,19 @@ aitd_t::~aitd_t ()
 aitd_t::aitd_t ()
     : m_d (make_shared<private_t> ())
 {
-    m_d->bodies["tatou"].parseData (GS ()->paks.at ("ITD_RESS").data (ress_t::TATOU_3DO));
 }
 
 void aitd_t::_start ()
 {
-    GS ()->handle.setPalette (GS ()->paks.at ("ITD_RESS").data (ress_t::PALETTE_GAME));
-    GS ()->handle.drawBody (m_d->bodies["tatou"]);
-    makeIntroScreens ();
+    switch (m_d->state)
+    {
+    case state_t::INTRO_TATOU:
+        m_d->intro.run ();
+        break;
+    case state_t::INTRO_SCREEN:
+        break;
+    }
+    //    makeIntroScreens ();
 }
 
 void aitd_t::_readBook (int index_, int type_)
@@ -43,6 +50,7 @@ void aitd_t::_readBook (int index_, int type_)
 
 void aitd_t::makeIntroScreens ()
 {
+    GS ()->handle.setPalette (GS ()->paks.at ("ITD_RESS").data (ress_t::PALETTE_GAME));
     GS ()->handle.setBackground (GS ()->paks.at ("ITD_RESS").data (ress_t::TITLE), 770);
 }
 

@@ -172,7 +172,7 @@ pak_t::~pak_t () = default;
 pak_t::pak_t (filesystem::path const &file_)
     : m_d (make_shared<private_t> ())
 {
-    PLOGD << filesystem::absolute (file_).string ();
+    PLOGV << filesystem::absolute (file_).string ();
 
     fstream iFile (filesystem::absolute (file_).string (), ios::binary | ios::in);
 
@@ -183,7 +183,7 @@ pak_t::pak_t (filesystem::path const &file_)
     iFile.read (reinterpret_cast<char *> (&fileOffset), 4);
     uint32_t iFileCount = (fileOffset / 4) - 2;
 
-    PLOGD << "File Count: " << to_string (iFileCount);
+    PLOGV << "File Count: " << to_string (iFileCount);
 
     m_d->paks.resize (iFileCount);
 

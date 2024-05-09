@@ -45,6 +45,18 @@ shared_ptr<gameState_t> osystem_t::GS ()
     return gs;
 }
 
+shared_ptr<input_t> osystem_t::IN ()
+{
+    static shared_ptr<input_t> in;
+
+    if (in)
+        return in;
+
+    in = make_shared<input_t> ();
+
+    return in;
+}
+
 osystem_t::~osystem_t () = default;
 
 osystem_t::osystem_t ()
@@ -77,13 +89,10 @@ void osystem_t::init (int argc_, char *argv_[])
 
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
 
-    loadPaks ();
-    detectGame ();
-
     GS ()->handle.init ();
 
-    m_d->frameStart = SDL_GetTicks ();
-    m_d->lastFrame = m_d->frameStart;
+    loadPaks ();
+    detectGame ();
 }
 
 bool osystem_t::run ()
@@ -160,6 +169,8 @@ bool osystem_t::handleInput ()
 {
     SDL_Event event;
 
+    IN ()->reset ();
+
     while (SDL_PollEvent (&event))
     {
         ImGui_ImplSDL3_ProcessEvent (&event);
@@ -167,6 +178,7 @@ bool osystem_t::handleInput ()
         switch (event.type)
         {
         case SDL_EVENT_KEY_DOWN:
+            IN ()->anyKey = true;
             if (event.key.keysym.scancode == SDL_SCANCODE_GRAVE)
                 GS ()->debugMenuDisplayed = !GS ()->debugMenuDisplayed;
             break;
@@ -181,6 +193,8 @@ bool osystem_t::handleInput ()
 
 void osystem_t::shutdown ()
 {
+    GS ()->game.reset (nullptr);
+
     PLOGD << "Begin shutdown event";
     GS ()->handle.shutdown ();
 

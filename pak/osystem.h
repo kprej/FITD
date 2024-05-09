@@ -25,6 +25,13 @@ struct gameState_t
     bgfxHandle_t handle;
 };
 
+struct input_t
+{
+    bool anyKey;
+
+    void reset () { anyKey = false; }
+};
+
 class osystem_t
 {
 public:
@@ -32,6 +39,7 @@ public:
     osystem_t ();
 
     static std::shared_ptr<gameState_t> GS ();
+    static std::shared_ptr<input_t> IN ();
 
     void init (int argc, char *argv[]);
 
@@ -50,4 +58,9 @@ private:
 inline std::shared_ptr<gameState_t> GS ()
 {
     return osystem_t::GS ();
+}
+
+inline std::shared_ptr<input_t> IN ()
+{
+    return osystem_t::IN ();
 }

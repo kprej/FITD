@@ -5,8 +5,15 @@
 
 #include <backends/imgui_impl_sdl3.h>
 #include <bgfx/platform.h>
+#include <bx/math.h>
 #include <imgui.h>
 #include <plog/Helpers/HexDump.h>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/quaternion.hpp>
 
 #include <plog/Log.h>
 
@@ -24,6 +31,7 @@ public:
         , paletteTexture (BGFX_INVALID_HANDLE)
         , backgroundTextureUniform (BGFX_INVALID_HANDLE)
         , paletteTextureUniform (BGFX_INVALID_HANDLE)
+        , alphaTextureUniform (BGFX_INVALID_HANDLE)
         , fieldModelInspectorFB (BGFX_INVALID_HANDLE)
         , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
         , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
@@ -34,8 +42,10 @@ public:
         , rampShader (BGFX_INVALID_HANDLE)
         , oldWindowSize (-1, -1)
         , gameResolution (320, 200)
-        , gameViewId (1)
+        , gameViewId (0)
+        , debugViewId (2)
         , backgroundMode (backgroundMode_t::_2D)
+        , alpha (0)
     {
     }
 
@@ -46,6 +56,12 @@ public:
 
     bgfx::UniformHandle backgroundTextureUniform;
     bgfx::UniformHandle paletteTextureUniform;
+    bgfx::UniformHandle alphaTextureUniform;
+
+    bgfx::VertexLayout backgroundLayout;
+    bgfx::VertexLayout bodyLayout;
+
+    backgroundState_t backgroundState;
 
     // Debug Bits
     bgfx::FrameBufferHandle fieldModelInspectorFB;
@@ -63,6 +79,7 @@ public:
     ImVec2 gameResolution;
 
     uint8_t gameViewId;
+    uint8_t debugViewId;
     backgroundMode_t backgroundMode;
 
     array<byte, 64000> physicalScreen;
@@ -71,6 +88,7 @@ public:
     int outputResolution[2];
     SDL_Window *window;
     array<byte, 768> currentPalette;
+    float alpha;
 };
 
 bgfxHandle_t::~bgfxHandle_t ()
@@ -85,7 +103,7 @@ bgfxHandle_t::bgfxHandle_t ()
 void bgfxHandle_t::init ()
 {
     PLOGD << "Create window";
-    m_d->window = SDL_CreateWindow (toString (GS ()->gameId).c_str (),
+    m_d->window = SDL_CreateWindow ("FITD",
                                     1280,
                                     800,
                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY |
@@ -152,6 +170,16 @@ void bgfxHandle_t::init ()
         return;
     }
 
+    m_d->backgroundLayout.begin ()
+        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end ();
+
+    m_d->bodyLayout.begin ()
+        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add (bgfx::Attrib::Color0, 1, bgfx::AttribType::Float)
+        .end ();
+
     PLOGD << "Create background Textures";
     m_d->backgroundTexture =
         bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
@@ -161,19 +189,21 @@ void bgfxHandle_t::init ()
         bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
     m_d->paletteTextureUniform =
         bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
+    m_d->alphaTextureUniform = bgfx::createUniform ("s_alpha", bgfx::UniformType::Vec4);
 
     PLOGD << "Load shaders";
     m_d->backgroundShader = loadProgram ("background");
-    m_d->maskBackgroundShader = loadProgram ("maskBackground");
     m_d->flatShader = loadProgram ("flat");
-    m_d->noiseShader = loadProgram ("noise");
-    m_d->rampShader = loadProgram ("ramp");
-
-    SDL_ShowWindow (m_d->window);
 }
 
 void bgfxHandle_t::startFrame ()
 {
+    if (SDL_GetWindowFlags (m_d->window) & SDL_WINDOW_HIDDEN)
+    {
+        SDL_SetWindowTitle (m_d->window, toString (GS ()->gameId).c_str ());
+    }
+
+    SDL_ShowWindow (m_d->window);
     int oldResolution[2];
     oldResolution[0] = m_d->outputResolution[0];
     oldResolution[1] = m_d->outputResolution[1];
@@ -193,8 +223,9 @@ void bgfxHandle_t::startFrame ()
     ImGui::NewFrame ();
 
     bgfx::setViewRect (0, 0, 0, m_d->outputResolution[0], m_d->outputResolution[1]);
-    bgfx::setViewClear (0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH);
+    bgfx::setViewClear (0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
     bgfx::touch (0);
+
     m_d->oldWindowSize = {-1, -1};
 
     if (GS ()->debugMenuDisplayed)
@@ -202,16 +233,51 @@ void bgfxHandle_t::startFrame ()
         startDebugFrame ();
     }
 
-    m_d->gameViewId = 0;
     m_d->gameResolution[0] = m_d->outputResolution[0];
     m_d->gameResolution[1] = m_d->outputResolution[1];
+
     bgfx::setViewFrameBuffer (m_d->gameViewId,
                               BGFX_INVALID_HANDLE); // bind the backbuffer
 
-    bgfx::setViewClear (m_d->gameViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
+    bgfx::setViewClear (
+        m_d->gameViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255, 1.0f, 0);
+
+    bgfx::setViewClear (
+        m_d->debugViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255, 1.0f, 0);
 
     bgfx::setViewName (m_d->gameViewId, "Game");
+    bgfx::setViewName (m_d->debugViewId, "Debug");
     bgfx::setViewMode (m_d->gameViewId, bgfx::ViewMode::Sequential);
+    const glm::vec3 at = {0.0f, 000.0f, 0.0f};
+    const glm::vec3 eye = {0.0f, 0.0f, -25.0f};
+    const glm::vec3 up = {0.0f, 1.0f, 0.0f};
+
+    auto view = glm::lookAt (eye, at, up);
+
+    const bgfx::Caps *caps = bgfx::getCaps ();
+
+    float perspMatrix[16] = {2 * (490) / m_d->gameResolution[0],
+                             0,
+                             0,
+                             0,
+                             0,
+                             2 * (490) / m_d->gameResolution[1],
+                             0,
+                             0,
+                             2 * (160 / m_d->gameResolution[0]) - 1,
+                             2 * (100 / m_d->gameResolution[1]) - 1,
+                             0,
+                             1,
+                             0,
+                             0,
+                             -1,
+                             0};
+    auto const proj =
+        glm::perspectiveFov (glm::radians (128.f), 500.0f, 490.0f, 0.1f, 100.0f);
+
+    // Set view and projection matrix for view 0.
+    bgfx::setViewTransform (
+        m_d->gameViewId, glm::value_ptr (view), glm::value_ptr (proj));
 
     bgfx::touch (m_d->gameViewId);
 
@@ -245,10 +311,53 @@ void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
                            bgfx::copy (texture_.data () + offset_, 320 * 200));
 }
 
+void bgfxHandle_t::fadeInBackground (float step_)
+{
+    m_d->alpha = glm::smoothstep (0.f, 255.f, step_);
+    if (m_d->alpha < 1.f)
+        m_d->backgroundState = backgroundState_t::FADING_IN;
+
+    else if (m_d->alpha == 1)
+        m_d->backgroundState = backgroundState_t::VISIBLE;
+}
+
+void bgfxHandle_t::fadeOutBackground (float step_)
+{
+    m_d->alpha = glm::smoothstep (0.f, 255.f, step_);
+    if (m_d->alpha > 0.f)
+        m_d->backgroundState = backgroundState_t::FADING_OUT;
+
+    else if (m_d->alpha == 1)
+        m_d->backgroundState = backgroundState_t::INVISIBLE;
+}
+
+backgroundState_t bgfxHandle_t::backgroundState () const
+{
+    return m_d->backgroundState;
+}
+
 void bgfxHandle_t::drawBody (body_t const &body_)
 {
+    glm::mat4 mat (1.0f);
+
+    glm::quat rot = glm::angleAxis (glm::radians (180.0f), glm::vec3 (0.0f, 0.0f, 1.0f));
+    rot *= glm::angleAxis (glm::radians (-90.0f), glm::vec3 (0.0f, 1.0f, 0.0f));
+    mat = glm::translate (mat, {0, 0, 0}) * glm::toMat4 (rot);
+
+    bgfx::setTransform (glm::value_ptr (mat));
+
     bgfx::setVertexBuffer (0, body_.vertexBuffer ());
-    bgfx::submit (0, m_d->flatShader);
+    bgfx::setIndexBuffer (body_.indexBuffer ());
+
+    bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
+    bgfx::setState (BGFX_STATE_DEFAULT);
+
+    bgfx::submit (m_d->gameViewId, m_d->flatShader);
+}
+
+bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
+{
+    return m_d->bodyLayout;
 }
 
 void bgfxHandle_t::shutdown ()
@@ -256,10 +365,14 @@ void bgfxHandle_t::shutdown ()
     PLOGD << "Destroy shaders";
 
     bgfx::destroy (m_d->backgroundShader);
-    bgfx::destroy (m_d->maskBackgroundShader);
     bgfx::destroy (m_d->flatShader);
-    bgfx::destroy (m_d->noiseShader);
-    bgfx::destroy (m_d->rampShader);
+
+    bgfx::destroy (m_d->backgroundTexture);
+    bgfx::destroy (m_d->paletteTexture);
+
+    bgfx::destroy (m_d->backgroundTextureUniform);
+    bgfx::destroy (m_d->paletteTextureUniform);
+    bgfx::destroy (m_d->alphaTextureUniform);
 
     PLOGD << "Shutdown ImGui";
     ImGui_ImplSDL3_Shutdown ();
@@ -275,7 +388,6 @@ void bgfxHandle_t::shutdown ()
 
 void bgfxHandle_t::startDebugFrame ()
 {
-
     if (ImGui::BeginMainMenuBar ())
     {
         ImGui::Text (" %.2f FPS (%.2f ms)",
@@ -284,7 +396,6 @@ void bgfxHandle_t::startDebugFrame ()
 
         ImGui::EndMainMenuBar ();
     }
-    m_d->gameViewId = 1;
 
     if (ImGui::Begin ("Game"))
     {
@@ -335,10 +446,10 @@ void bgfxHandle_t::startDebugFrame ()
         attachements[1].init (m_d->fieldModelInspectorDepth);
         m_d->fieldModelInspectorFB = bgfx::createFrameBuffer (2, &attachements[0], true);
     }
-    bgfx::setViewFrameBuffer (m_d->gameViewId, m_d->fieldModelInspectorFB);
 
+    bgfx::setViewFrameBuffer (m_d->debugViewId, m_d->fieldModelInspectorFB);
     bgfx::setViewRect (
-        m_d->gameViewId, 0, 0, m_d->gameResolution[0], m_d->gameResolution[1]);
+        m_d->debugViewId, 0, 0, m_d->gameResolution[0], m_d->gameResolution[1]);
 }
 
 void bgfxHandle_t::drawBackground ()
@@ -346,14 +457,8 @@ void bgfxHandle_t::drawBackground ()
     if (m_d->backgroundMode != backgroundMode_t::_2D)
         return;
 
-    bgfx::VertexLayout layout;
-    layout.begin ()
-        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .end ();
-
     bgfx::TransientVertexBuffer transientBuffer;
-    bgfx::allocTransientVertexBuffer (&transientBuffer, 6, layout);
+    bgfx::allocTransientVertexBuffer (&transientBuffer, 6, m_d->backgroundLayout);
 
     struct sVertice
     {
@@ -415,11 +520,15 @@ void bgfxHandle_t::drawBackground ()
     pVertices->texcoord[1] = 1.f;
     pVertices++;
 
-    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_MSAA);
-
     bgfx::setVertexBuffer (0, &transientBuffer);
+
+    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                    BGFX_STATE_BLEND_SRC_ALPHA);
 
     bgfx::setTexture (0, m_d->backgroundTextureUniform, m_d->backgroundTexture);
     bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
+
+    bgfx::setUniform (m_d->alphaTextureUniform, &m_d->alpha);
+
     bgfx::submit (m_d->gameViewId, m_d->backgroundShader);
 }
