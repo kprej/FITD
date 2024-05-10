@@ -57,11 +57,14 @@ public:
     bgfx::UniformHandle backgroundTextureUniform;
     bgfx::UniformHandle paletteTextureUniform;
     bgfx::UniformHandle alphaTextureUniform;
+    bgfx::UniformHandle polyColorUniform;
 
     bgfx::VertexLayout backgroundLayout;
     bgfx::VertexLayout bodyLayout;
 
     backgroundState_t backgroundState;
+    float fadeStep;
+    int fadeTimeMSec;
 
     // Debug Bits
     bgfx::FrameBufferHandle fieldModelInspectorFB;
@@ -177,7 +180,6 @@ void bgfxHandle_t::init ()
 
     m_d->bodyLayout.begin ()
         .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add (bgfx::Attrib::Color0, 1, bgfx::AttribType::Float)
         .end ();
 
     PLOGD << "Create background Textures";
@@ -185,11 +187,14 @@ void bgfxHandle_t::init ()
         bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
     m_d->paletteTexture =
         bgfx::createTexture2D (3, 256, false, 1, bgfx::TextureFormat::R8U);
+
     m_d->backgroundTextureUniform =
         bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
     m_d->paletteTextureUniform =
         bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
+
     m_d->alphaTextureUniform = bgfx::createUniform ("s_alpha", bgfx::UniformType::Vec4);
+    m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
 
     PLOGD << "Load shaders";
     m_d->backgroundShader = loadProgram ("background");
@@ -248,32 +253,19 @@ void bgfxHandle_t::startFrame ()
     bgfx::setViewName (m_d->gameViewId, "Game");
     bgfx::setViewName (m_d->debugViewId, "Debug");
     bgfx::setViewMode (m_d->gameViewId, bgfx::ViewMode::Sequential);
-    const glm::vec3 at = {0.0f, 000.0f, 0.0f};
-    const glm::vec3 eye = {0.0f, 0.0f, -25.0f};
+    const glm::vec3 at = {0.0f, 0.0f, 0.0f};
+    const glm::vec3 eye = {0.0f, 0.0f, -65.0f};
     const glm::vec3 up = {0.0f, 1.0f, 0.0f};
 
     auto view = glm::lookAt (eye, at, up);
 
     const bgfx::Caps *caps = bgfx::getCaps ();
 
-    float perspMatrix[16] = {2 * (490) / m_d->gameResolution[0],
-                             0,
-                             0,
-                             0,
-                             0,
-                             2 * (490) / m_d->gameResolution[1],
-                             0,
-                             0,
-                             2 * (160 / m_d->gameResolution[0]) - 1,
-                             2 * (100 / m_d->gameResolution[1]) - 1,
-                             0,
-                             1,
-                             0,
-                             0,
-                             -1,
-                             0};
     auto const proj =
-        glm::perspectiveFov (glm::radians (128.f), 500.0f, 490.0f, 0.1f, 100.0f);
+        glm::perspective (glm::radians (60.f),
+                          float (m_d->gameResolution[0]) / float (m_d->gameResolution[1]),
+                          0.1f,
+                          1000.0f);
 
     // Set view and projection matrix for view 0.
     bgfx::setViewTransform (
@@ -311,24 +303,24 @@ void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
                            bgfx::copy (texture_.data () + offset_, 320 * 200));
 }
 
-void bgfxHandle_t::fadeInBackground (float step_)
+void bgfxHandle_t::fadeInBackground (int msec_)
 {
-    m_d->alpha = glm::smoothstep (0.f, 255.f, step_);
-    if (m_d->alpha < 1.f)
-        m_d->backgroundState = backgroundState_t::FADING_IN;
+    if (m_d->backgroundState == backgroundState_t::FADING_IN)
+        return;
 
-    else if (m_d->alpha == 1)
-        m_d->backgroundState = backgroundState_t::VISIBLE;
+    m_d->backgroundState = backgroundState_t::FADING_IN;
+    m_d->fadeStep = 0;
+    m_d->fadeTimeMSec = msec_;
 }
 
-void bgfxHandle_t::fadeOutBackground (float step_)
+void bgfxHandle_t::fadeOutBackground (int msec_)
 {
-    m_d->alpha = glm::smoothstep (0.f, 255.f, step_);
-    if (m_d->alpha > 0.f)
-        m_d->backgroundState = backgroundState_t::FADING_OUT;
+    if (m_d->backgroundState == backgroundState_t::FADING_OUT)
+        return;
 
-    else if (m_d->alpha == 1)
-        m_d->backgroundState = backgroundState_t::INVISIBLE;
+    m_d->backgroundState = backgroundState_t::FADING_OUT;
+    m_d->fadeStep = 255;
+    m_d->fadeTimeMSec = msec_;
 }
 
 backgroundState_t bgfxHandle_t::backgroundState () const
@@ -338,21 +330,26 @@ backgroundState_t bgfxHandle_t::backgroundState () const
 
 void bgfxHandle_t::drawBody (body_t const &body_)
 {
-    glm::mat4 mat (1.0f);
+    for (auto const &p : body_.primitives ())
+    {
+        bgfx::setTransform (glm::value_ptr (body_.transform ()));
 
-    glm::quat rot = glm::angleAxis (glm::radians (180.0f), glm::vec3 (0.0f, 0.0f, 1.0f));
-    rot *= glm::angleAxis (glm::radians (-90.0f), glm::vec3 (0.0f, 1.0f, 0.0f));
-    mat = glm::translate (mat, {0, 0, 0}) * glm::toMat4 (rot);
+        bgfx::setVertexBuffer (0, body_.vertexBuffer ());
+        bgfx::setIndexBuffer (body_.indexBuffer (), p.start, p.size);
 
-    bgfx::setTransform (glm::value_ptr (mat));
+        bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
+        bgfx::setUniform (m_d->polyColorUniform, &p.color);
 
-    bgfx::setVertexBuffer (0, body_.vertexBuffer ());
-    bgfx::setIndexBuffer (body_.indexBuffer ());
+        unsigned long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                              BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
+                              BGFX_STATE_CULL_CCW | BGFX_STATE_MSAA;
 
-    bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
-    bgfx::setState (BGFX_STATE_DEFAULT);
+        if (p.size == 2)
+            state |= BGFX_STATE_PT_LINES;
 
-    bgfx::submit (m_d->gameViewId, m_d->flatShader);
+        bgfx::setState (state);
+        bgfx::submit (m_d->gameViewId, m_d->flatShader);
+    }
 }
 
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
@@ -373,6 +370,7 @@ void bgfxHandle_t::shutdown ()
     bgfx::destroy (m_d->backgroundTextureUniform);
     bgfx::destroy (m_d->paletteTextureUniform);
     bgfx::destroy (m_d->alphaTextureUniform);
+    bgfx::destroy (m_d->polyColorUniform);
 
     PLOGD << "Shutdown ImGui";
     ImGui_ImplSDL3_Shutdown ();
@@ -457,6 +455,19 @@ void bgfxHandle_t::drawBackground ()
     if (m_d->backgroundMode != backgroundMode_t::_2D)
         return;
 
+    switch (m_d->backgroundState)
+    {
+    case backgroundState_t::FADING_IN:
+        processFadeIn ();
+        break;
+    case backgroundState_t::FADING_OUT:
+        processFadeOut ();
+        break;
+    case backgroundState_t::VISIBLE:
+    case backgroundState_t::INVISIBLE:
+        break;
+    };
+
     bgfx::TransientVertexBuffer transientBuffer;
     bgfx::allocTransientVertexBuffer (&transientBuffer, 6, m_d->backgroundLayout);
 
@@ -531,4 +542,32 @@ void bgfxHandle_t::drawBackground ()
     bgfx::setUniform (m_d->alphaTextureUniform, &m_d->alpha);
 
     bgfx::submit (m_d->gameViewId, m_d->backgroundShader);
+}
+
+void bgfxHandle_t::processFadeIn ()
+{
+    m_d->fadeStep += GS ()->delta;
+    m_d->alpha = glm::smoothstep (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
+
+    if (m_d->alpha < 1.f)
+        m_d->backgroundState = backgroundState_t::FADING_IN;
+
+    else if (m_d->alpha == 1)
+        m_d->backgroundState = backgroundState_t::VISIBLE;
+}
+
+void bgfxHandle_t::processFadeOut ()
+{
+    m_d->fadeStep -= GS ()->delta;
+    m_d->alpha = glm::smoothstep (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
+    if (m_d->alpha > 0.f)
+        m_d->backgroundState = backgroundState_t::FADING_OUT;
+
+    else if (m_d->alpha == 0)
+        m_d->backgroundState = backgroundState_t::INVISIBLE;
+}
+
+bool bgfxHandle_t::windowHidden () const
+{
+    return (SDL_GetWindowFlags (m_d->window) & SDL_WINDOW_HIDDEN);
 }

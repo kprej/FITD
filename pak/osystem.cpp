@@ -1,6 +1,7 @@
 #include "osystem.h"
-#include "AITD.h"
 #include "bgfxHandle.h"
+
+#include "AITD/AITD.h"
 
 #include <backends/imgui_impl_sdl3.h>
 #include <bgfx/bgfx.h>
@@ -31,6 +32,8 @@ public:
 
     unsigned long frameStart;
     unsigned long lastFrame;
+
+    uint64_t lastTime;
 };
 
 shared_ptr<gameState_t> osystem_t::GS ()
@@ -88,15 +91,20 @@ void osystem_t::init (int argc_, char *argv_[])
     }
 
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
+    m_d->lastTime = SDL_GetTicks ();
 
     GS ()->handle.init ();
 
     loadPaks ();
     detectGame ();
+    GS ()->handle.startFrame ();
+    GS ()->handle.endFrame ();
 }
 
 bool osystem_t::run ()
 {
+    GS ()->delta = SDL_GetTicks () - m_d->lastTime;
+    m_d->lastTime = SDL_GetTicks ();
     if (!handleInput ())
         return false;
 
@@ -209,6 +217,6 @@ void osystem_t::loadPaks ()
         if (file.path ().extension () != ".PAK")
             continue;
 
-        GS ()->paks.insert ({file.path ().stem ().string (), pak_t (file.path ())});
+        GS ()->paks.insert ({file.path ().stem ().string (), pakFile_t (file.path ())});
     }
 }

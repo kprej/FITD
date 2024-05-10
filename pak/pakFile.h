@@ -6,15 +6,29 @@
 #include <memory>
 #include <vector>
 
-class pakInfo_t
+class pakFile_t;
+enum class pakType_t
+{
+    PALETTE,
+    TEXTURE,
+    PALETTE_TEXTURE,
+    BODY,
+    SOUND,
+    TEXT,
+};
+
+class pak_t
 {
 public:
-    ~pakInfo_t ();
-    pakInfo_t ();
-
-    void init (std::fstream &file_);
+    ~pak_t ();
+    pak_t ();
 
     std::vector<std::byte> const &data () const;
+
+protected:
+    friend class pakFile_t;
+
+    void init (std::fstream &file_);
 
 private:
     void unpak (std::fstream &file_);
@@ -25,11 +39,13 @@ private:
     std::shared_ptr<private_t> m_d;
 };
 
-class pak_t
+class pakFile_t
 {
 public:
-    ~pak_t ();
-    pak_t (std::filesystem::path const &file_);
+    ~pakFile_t ();
+    pakFile_t (std::filesystem::path const &file_);
+
+    pak_t const &pak (uint8_t index_) const;
 
     std::vector<std::byte> const &data (uint8_t index_) const;
 

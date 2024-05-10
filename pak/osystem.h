@@ -18,11 +18,13 @@ struct gameState_t
     bool debugMenuDisplayed;
     bool shutdown;
     std::vector<int16_t> CVars;
-    std::map<std::string, pak_t> paks;
+    std::map<std::string, pakFile_t> paks;
 
     std::unique_ptr<game_t> game;
 
     bgfxHandle_t handle;
+
+    uint64_t delta;
 };
 
 struct input_t

@@ -17,6 +17,8 @@ enum class backgroundState_t
     FADING_OUT,
 };
 
+class osystem_t;
+
 class bgfxHandle_t
 {
 public:
@@ -32,17 +34,25 @@ public:
     void setPalette (std::vector<std::byte> const &palette_);
     void setBackground (std::vector<std::byte> const &texture_, int offest_ = 0);
 
-    void fadeInBackground (float step_);
-    void fadeOutBackground (float step_);
+    void fadeInBackground (int msec_ = 500);
+    void fadeOutBackground (int msec_ = 500);
     void drawBody (body_t const &body_);
 
     backgroundState_t backgroundState () const;
 
     bgfx::VertexLayout const &bodyVertexLayout () const;
 
+protected:
+    friend class osystem_t;
+
+    bool windowHidden () const;
+
 private:
     void startDebugFrame ();
     void drawBackground ();
+
+    void processFadeIn ();
+    void processFadeOut ();
 
     class private_t;
     std::unique_ptr<private_t> m_d;

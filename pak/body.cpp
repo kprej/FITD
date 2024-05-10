@@ -33,7 +33,12 @@ public:
         bgfx::destroy (vBuffer);
         bgfx::destroy (iBuffer);
     }
-    private_t () {}
+    private_t ()
+        : position (0, 0, 0)
+        , scale (1)
+        , rotation (0, 0, 0)
+    {
+    }
 
     uint16_t flags;
     ZVStruct zv;
@@ -48,11 +53,13 @@ public:
 
     bgfx::VertexBufferHandle vBuffer;
     bgfx::IndexBufferHandle iBuffer;
+    vector<primitive_t> prims;
 
     vector<byte> palette;
 
-    glm::quat rotation;
+    glm::vec3 rotation;
     glm::vec3 position;
+    float scale;
 };
 
 body_t::~body_t () = default;
@@ -86,7 +93,7 @@ void body_t::parseData (vector<byte> const &data_)
         vert.x = bodyBuffer.get<int16_t> ();
         vert.y = bodyBuffer.get<int16_t> ();
         vert.z = bodyBuffer.get<int16_t> ();
-        m_d->raw.push_back ({{float (vert.x), float (vert.y), float (vert.z)}, 0});
+        m_d->raw.push_back ({float (vert.x), float (vert.y), float (vert.z)});
     }
 
     if (m_d->flags & ANIM)
@@ -153,41 +160,49 @@ void body_t::parseData (vector<byte> const &data_)
     uint16_t numPrimitives = bodyBuffer.get<uint16_t> ();
     m_d->primitives.resize (numPrimitives);
 
+    uint16_t index = 0;
     for (auto &primitive : m_d->primitives)
     {
         primitive.m_type = (primitiveType_t)bodyBuffer.get<uint8_t> ();
+
+        primitive_t prim;
+        prim.start = index;
 
         switch (primitive.m_type)
         {
         case Line:
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
             primitive.m_even = bodyBuffer.get<uint8_t> ();
             primitive.m_points.resize (2);
+            prim.size = 2;
+            index += 2;
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case Poly:
             primitive.m_points.resize (bodyBuffer.get<uint8_t> ());
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
+            prim.size = primitive.m_points.size ();
+            index += prim.size;
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
 
             if (primitive.m_points.size () > 3)
             {
                 m_d->points.push_back (primitive.m_points[0]);
                 m_d->points.push_back (primitive.m_points[2]);
+                index += 2;
+                prim.size += 2;
             }
 
             break;
@@ -195,7 +210,7 @@ void body_t::parseData (vector<byte> const &data_)
         case BigPoint:
         case Zixel:
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
             primitive.m_even = bodyBuffer.get<uint8_t> ();
             primitive.m_points.resize (1);
             for (int j = 0; j < primitive.m_points.size (); j++)
@@ -203,12 +218,11 @@ void body_t::parseData (vector<byte> const &data_)
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case Sphere:
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
             primitive.m_even = bodyBuffer.get<uint8_t> ();
             primitive.m_size = bodyBuffer.get<uint16_t> ();
             primitive.m_points.resize (1);
@@ -217,20 +231,18 @@ void body_t::parseData (vector<byte> const &data_)
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case PolyTexture8:
             PLOGD << "PLY TEX 8";
             primitive.m_points.resize (bodyBuffer.get<uint8_t> ());
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
             break;
         case PolyTexture9:
@@ -238,13 +250,12 @@ void body_t::parseData (vector<byte> const &data_)
             PLOGD << "PLY TEX 10/9";
             primitive.m_points.resize (bodyBuffer.get<uint8_t> ());
             primitive.m_subType = bodyBuffer.get<uint8_t> ();
-            primitive.m_color = bodyBuffer.get<uint8_t> ();
+            prim.color = bodyBuffer.get<uint8_t> ();
             for (int j = 0; j < primitive.m_points.size (); j++)
             {
                 uint16_t point = bodyBuffer.get<uint16_t> () / 6;
                 primitive.m_points[j] = point;
                 m_d->points.push_back (primitive.m_points[j]);
-                m_d->raw[point].color = primitive.m_color;
             }
             // load UVS?
             for (int j = 0; j < primitive.m_points.size (); j++)
@@ -257,6 +268,8 @@ void body_t::parseData (vector<byte> const &data_)
             assert (0);
             break;
         }
+
+        m_d->prims.push_back (prim);
     }
 
     m_d->vBuffer = bgfx::createVertexBuffer (
@@ -269,22 +282,27 @@ void body_t::parseData (vector<byte> const &data_)
 
 void body_t::rotateX (float x_)
 {
-    m_d->rotation *= glm::angleAxis (glm::radians (x_), glm::vec3 (1.0f, 0.0f, 0.0f));
+    m_d->rotation.x += x_;
 }
 
 void body_t::rotateY (float y_)
 {
-    m_d->rotation *= glm::angleAxis (glm::radians (y_), glm::vec3 (0.0f, 1.0f, 0.0f));
+    m_d->rotation.y += y_;
 }
 
 void body_t::rotateZ (float z_)
 {
-    m_d->rotation *= glm::angleAxis (glm::radians (z_), glm::vec3 (0.0f, 0.0f, 1.0f));
+    m_d->rotation.z += z_;
 }
 
 void body_t::pos (float x_, float y_, float z_)
 {
     m_d->position = glm::vec3 (x_, y_, z_);
+}
+
+void body_t::scale (float scale_)
+{
+    m_d->scale = scale_;
 }
 
 bgfx::VertexBufferHandle const &body_t::vertexBuffer () const
@@ -297,11 +315,25 @@ bgfx::IndexBufferHandle const &body_t::indexBuffer () const
     return m_d->iBuffer;
 }
 
-glm::mat4 body_t::transform ()
+vector<body_t::primitive_t> const &body_t::primitives () const
+{
+    return m_d->prims;
+}
+
+glm::mat4 body_t::transform () const
 {
     glm::mat4 mat (1.0f);
+    glm::quat rotation = glm::angleAxis (0.f, glm::vec3 (0.f, 0.f, 0.f));
 
-    mat = glm::translate (mat, m_d->position) * glm::toMat4 (m_d->rotation);
+    rotation *=
+        glm::angleAxis (glm::radians (m_d->rotation.x), glm::vec3 (1.0f, 0.0f, 0.0f));
+    rotation *=
+        glm::angleAxis (glm::radians (m_d->rotation.y), glm::vec3 (0.0f, 1.0f, 0.0f));
+    rotation *=
+        glm::angleAxis (glm::radians (m_d->rotation.z), glm::vec3 (0.0f, 0.0f, 1.0f));
+
+    mat = glm::translate (mat, m_d->position) * glm::toMat4 (rotation) *
+          glm::scale (mat, glm::vec3 {m_d->scale, m_d->scale, m_d->scale});
 
     return mat;
 }

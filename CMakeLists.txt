@@ -35,7 +35,6 @@ FetchContent_MakeAvailable(SDL)
 FetchContent_MakeAvailable(zlib)
 
 add_subdirectory( deps/imgui )
-add_subdirectory( shaderLib )
 add_subdirectory( FitdLib )
 add_subdirectory( Fitd )
 add_subdirectory( pak )

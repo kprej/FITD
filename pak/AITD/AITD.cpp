@@ -1,4 +1,4 @@
-#include "AITD.h"
+#include "AITD/AITD.h"
 #include "body.h"
 #include "introScene.h"
 #include "osystem.h"

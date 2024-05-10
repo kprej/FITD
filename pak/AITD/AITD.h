@@ -30,7 +30,6 @@ public:
         CAM06005 = 18,
         CAM06008 = 19,
     };
-
     enum class state_t
     {
         INTRO_TATOU,

@@ -10,7 +10,7 @@
 #include <string>
 using namespace std;
 
-class pakInfo_t::private_t
+class pak_t::private_t
 {
 public:
     ~private_t () = default;
@@ -37,13 +37,13 @@ public:
     vector<byte> data;
 };
 
-pakInfo_t::~pakInfo_t () = default;
-pakInfo_t::pakInfo_t ()
+pak_t::~pak_t () = default;
+pak_t::pak_t ()
     : m_d (make_shared<private_t> ())
 {
 }
 
-void pakInfo_t::init (fstream &file_)
+void pak_t::init (fstream &file_)
 {
     auto initPos = file_.tellg ();
 
@@ -85,12 +85,12 @@ void pakInfo_t::init (fstream &file_)
     unpak (file_);
 }
 
-vector<byte> const &pakInfo_t::data () const
+vector<byte> const &pak_t::data () const
 {
     return m_d->data;
 }
 
-void pakInfo_t::unpak (fstream &file_)
+void pak_t::unpak (fstream &file_)
 {
     switch (m_d->compressionFlag)
     {
@@ -136,7 +136,7 @@ void pakInfo_t::unpak (fstream &file_)
     };
 }
 
-void pakInfo_t::sanitizeName ()
+void pak_t::sanitizeName ()
 {
     list<string::iterator> toErase;
     bool foundChar = false;
@@ -157,7 +157,7 @@ void pakInfo_t::sanitizeName ()
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
-class pak_t::private_t
+class pakFile_t::private_t
 {
 public:
     ~private_t () = default;
@@ -166,10 +166,10 @@ public:
     {
     }
 
-    vector<pakInfo_t> paks;
+    vector<pak_t> paks;
 };
-pak_t::~pak_t () = default;
-pak_t::pak_t (filesystem::path const &file_)
+pakFile_t::~pakFile_t () = default;
+pakFile_t::pakFile_t (filesystem::path const &file_)
     : m_d (make_shared<private_t> ())
 {
     PLOGV << filesystem::absolute (file_).string ();
@@ -211,7 +211,7 @@ pak_t::pak_t (filesystem::path const &file_)
     }
 }
 
-vector<byte> const &pak_t::data (uint8_t index_) const
+vector<byte> const &pakFile_t::data (uint8_t index_) const
 {
     return m_d->paks.at (index_).data ();
 }

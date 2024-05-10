@@ -11,9 +11,13 @@ set(SHADERS
     shaders/flat_fs.h.bin
     )
 
+set(AITD1
+    AITD/ITD_RESS.h
+    AITD/AITD.cpp
+    AITD/AITD.h
+    )
+
 add_executable (pak
-    AITD.cpp
-    AITD.h
     bgfxHandle.cpp
     bgfxHandle.h
     bgfxShader.cpp
@@ -36,7 +40,9 @@ add_executable (pak
     types.h
     unpack.cpp
     unpack.h
+    ${AITD1}
     ${SHADERS}
     )
 
+target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD)
 target_link_libraries(pak bgfx bx glm imgui plog SDL3::SDL3 zlib)

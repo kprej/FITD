@@ -12,6 +12,12 @@ public:
     struct raw_t
     {
         float pos[3];
+    };
+
+    struct primitive_t
+    {
+        uint16_t start;
+        uint8_t size;
         float color;
     };
 
@@ -26,10 +32,15 @@ public:
 
     void pos (float x_, float y_, float z_);
 
+    void scale (float scale_);
+
     bgfx::VertexBufferHandle const &vertexBuffer () const;
     bgfx::IndexBufferHandle const &indexBuffer () const;
+    std::vector<primitive_t> const &primitives () const;
 
-    glm::mat4 transform ();
+    glm::mat4 transform () const;
+
+    void draw ();
 
 private:
     class private_t;

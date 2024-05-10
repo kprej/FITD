@@ -1,5 +1,1 @@
 vec3 a_position  : POSITION;
-float a_color0 : COLOR0;
-
-
-float v_color0 : COLOR0 = float(0.0);

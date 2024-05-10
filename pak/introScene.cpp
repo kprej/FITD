@@ -11,9 +11,10 @@ namespace
 {
 enum state_t
 {
+    ENTER,
     TITLE,
     DILLO,
-    TRANSITION,
+    EXIT,
 };
 }
 
@@ -23,15 +24,14 @@ public:
     ~private_t () = default;
     private_t ()
         : bodies ()
-        , state (TITLE)
-        , fade (0)
+        , state (ENTER)
+        , introTime (0)
     {
     }
 
     map<string, body_t> bodies;
     state_t state;
-
-    float fade;
+    uint16_t introTime;
 };
 
 introScene_t::~introScene_t ()
@@ -45,46 +45,54 @@ introScene_t::introScene_t ()
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
 
     m_d->bodies["tatou"].rotateZ (180);
-    GS ()->handle.fadeInBackground (m_d->fade);
+    m_d->bodies["tatou"].rotateY (90);
+    m_d->bodies["tatou"].pos (0, 0, 300);
+
+    m_d->bodies["tatou"].scale (0.08);
+}
+
+void introScene_t::enter ()
+{
+    GS ()->handle.fadeInBackground (1000);
+    GS ()->handle.setBackground (
+        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
+
+    GS ()->handle.setPalette (
+        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
+
+    m_d->state = TITLE;
 }
 
 void introScene_t::run ()
 {
+    m_d->introTime += GS ()->delta;
+    GS ()->handle.drawBody (m_d->bodies["tatou"]);
+    m_d->bodies["tatou"].rotateY (0.1);
     switch (m_d->state)
     {
+    case ENTER:
+        enter ();
+        break;
     case TITLE:
         if (GS ()->handle.backgroundState () == backgroundState_t::FADING_IN)
+            return;
+
+        if (IN ()->anyKey || m_d->introTime > 1000)
         {
-            GS ()->handle.fadeInBackground (m_d->fade++);
+            m_d->state = DILLO;
+            return;
         }
 
-        GS ()->handle.setBackground (
-            GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
-
-        GS ()->handle.setPalette (
-            GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
-
-        if (IN ()->anyKey)
-        {
-            m_d->state = TRANSITION;
-            m_d->fade = 255;
-            GS ()->handle.fadeOutBackground (m_d->fade);
-        }
         break;
     case DILLO:
-        GS ()->handle.drawBody (m_d->bodies["tatou"]);
         break;
-    case TRANSITION:
-        if (GS ()->handle.backgroundState () == backgroundState_t::FADING_OUT)
-        {
-            GS ()->handle.fadeOutBackground (m_d->fade--);
-        }
-
-        GS ()->handle.setBackground (
-            GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
-
-        GS ()->handle.setPalette (
-            GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
+    case EXIT:
+        exit ();
         break;
     }
+}
+
+void introScene_t::exit ()
+{
+    GS ()->handle.fadeOutBackground (1000);
 }

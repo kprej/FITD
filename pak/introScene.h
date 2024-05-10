@@ -10,7 +10,9 @@ public:
     ~introScene_t ();
     introScene_t ();
 
+    void enter ();
     void run ();
+    void exit ();
 
 private:
     class private_t;
