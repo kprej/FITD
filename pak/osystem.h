@@ -1,5 +1,6 @@
 #pragma once
 #include "bgfxHandle.h"
+#include "debugHandle.h"
 #include "game.h"
 #include "pakFile.h"
 #include "types.h"
@@ -23,6 +24,7 @@ struct gameState_t
     std::unique_ptr<game_t> game;
 
     bgfxHandle_t handle;
+    debugHandle_t debug;
 
     uint64_t delta;
 };

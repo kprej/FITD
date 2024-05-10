@@ -1,12 +1,9 @@
 #include "bgfxHandle.h"
 #include "bgfxShader.h"
-#include "imgui_impl_bgfx.h"
 #include "osystem.h"
 
-#include <backends/imgui_impl_sdl3.h>
 #include <bgfx/platform.h>
-#include <bx/math.h>
-#include <imgui.h>
+
 #include <plog/Helpers/HexDump.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -32,9 +29,6 @@ public:
         , backgroundTextureUniform (BGFX_INVALID_HANDLE)
         , paletteTextureUniform (BGFX_INVALID_HANDLE)
         , alphaTextureUniform (BGFX_INVALID_HANDLE)
-        , fieldModelInspectorFB (BGFX_INVALID_HANDLE)
-        , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
-        , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
         , backgroundShader (BGFX_INVALID_HANDLE)
         , maskBackgroundShader (BGFX_INVALID_HANDLE)
         , flatShader (BGFX_INVALID_HANDLE)
@@ -66,11 +60,6 @@ public:
     float fadeStep;
     int fadeTimeMSec;
 
-    // Debug Bits
-    bgfx::FrameBufferHandle fieldModelInspectorFB;
-    bgfx::TextureHandle fieldModelInspectorTexture;
-    bgfx::TextureHandle fieldModelInspectorDepth;
-
     // Shader Handles
     bgfx::ProgramHandle backgroundShader;
     bgfx::ProgramHandle maskBackgroundShader;
@@ -78,8 +67,8 @@ public:
     bgfx::ProgramHandle noiseShader;
     bgfx::ProgramHandle rampShader;
 
-    ImVec2 oldWindowSize;
-    ImVec2 gameResolution;
+    glm::vec2 oldWindowSize;
+    glm::vec2 gameResolution;
 
     uint8_t gameViewId;
     uint8_t debugViewId;
@@ -161,17 +150,7 @@ void bgfxHandle_t::init ()
         return;
     }
 
-    PLOGD << "Using renderer type: " << bgfx::getRendererName (bgfx::getRendererType ());
-
-    PLOGD << "Init ImGui";
-    ImGui::CreateContext ();
-
-    ImGui_Implbgfx_Init (255);
-    if (!ImGui_ImplSDL3_InitForOpenGL (m_d->window, nullptr))
-    {
-        PLOGF << "Failed to init ImGui";
-        return;
-    }
+    GS ()->debug.init (m_d->window);
 
     m_d->backgroundLayout.begin ()
         .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
@@ -218,14 +197,8 @@ void bgfxHandle_t::startFrame ()
     if ((oldResolution[0] != m_d->outputResolution[0]) ||
         (oldResolution[1] != m_d->outputResolution[1]))
     {
-        bgfx::reset (
-            m_d->outputResolution[0], m_d->outputResolution[1], BGFX_RESET_HIDPI);
+        bgfx::reset (m_d->outputResolution[0], m_d->outputResolution[1]);
     }
-
-    ImGui_Implbgfx_NewFrame ();
-    ImGui_ImplSDL3_NewFrame ();
-
-    ImGui::NewFrame ();
 
     bgfx::setViewRect (0, 0, 0, m_d->outputResolution[0], m_d->outputResolution[1]);
     bgfx::setViewClear (0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255);
@@ -235,7 +208,7 @@ void bgfxHandle_t::startFrame ()
 
     if (GS ()->debugMenuDisplayed)
     {
-        startDebugFrame ();
+        GS ()->debug.startFrame ();
     }
 
     m_d->gameResolution[0] = m_d->outputResolution[0];
@@ -251,7 +224,6 @@ void bgfxHandle_t::startFrame ()
         m_d->debugViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255, 1.0f, 0);
 
     bgfx::setViewName (m_d->gameViewId, "Game");
-    bgfx::setViewName (m_d->debugViewId, "Debug");
     bgfx::setViewMode (m_d->gameViewId, bgfx::ViewMode::Sequential);
     const glm::vec3 at = {0.0f, 0.0f, 0.0f};
     const glm::vec3 eye = {0.0f, 0.0f, -65.0f};
@@ -278,9 +250,10 @@ void bgfxHandle_t::startFrame ()
 
 void bgfxHandle_t::endFrame ()
 {
-    ImGui::Render ();
-
-    ImGui_Implbgfx_RenderDrawLists (ImGui::GetDrawData ());
+    if (GS ()->debugMenuDisplayed)
+    {
+        GS ()->debug.endFrame ();
+    }
 
     bgfx::frame ();
 }
@@ -372,82 +345,12 @@ void bgfxHandle_t::shutdown ()
     bgfx::destroy (m_d->alphaTextureUniform);
     bgfx::destroy (m_d->polyColorUniform);
 
-    PLOGD << "Shutdown ImGui";
-    ImGui_ImplSDL3_Shutdown ();
-    ImGui_Implbgfx_Shutdown ();
-
-    ImGui::DestroyContext ();
+    GS ()->debug.shutdown ();
 
     PLOGD << "Shutdown BGFX";
     bgfx::shutdown ();
 
     SDL_DestroyWindow (m_d->window);
-}
-
-void bgfxHandle_t::startDebugFrame ()
-{
-    if (ImGui::BeginMainMenuBar ())
-    {
-        ImGui::Text (" %.2f FPS (%.2f ms)",
-                     ImGui::GetIO ().Framerate,
-                     1000.0f / ImGui::GetIO ().Framerate);
-
-        ImGui::EndMainMenuBar ();
-    }
-
-    if (ImGui::Begin ("Game"))
-    {
-        ImVec2 currentWindowSize = ImGui::GetContentRegionAvail ();
-
-        currentWindowSize[0] = std::max<int> (currentWindowSize[0], 1);
-        currentWindowSize[1] = std::max<int> (currentWindowSize[1], 1);
-
-        m_d->gameResolution = currentWindowSize;
-    }
-    else
-    {
-        m_d->gameResolution = {320, 200};
-    }
-    ImGui::End ();
-
-    if ((m_d->gameResolution[0] != m_d->oldWindowSize[0]) ||
-        (m_d->gameResolution[1] != m_d->oldWindowSize[1]))
-    {
-        m_d->oldWindowSize = m_d->gameResolution;
-
-        if (bgfx::isValid (m_d->fieldModelInspectorFB))
-        {
-            bgfx::destroy (m_d->fieldModelInspectorFB);
-        }
-
-        const uint64_t tsFlags = 0
-                                 //| BGFX_SAMPLER_MIN_POINT
-                                 //| BGFX_SAMPLER_MAG_POINT
-                                 //| BGFX_SAMPLER_MIP_POINT
-                                 | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-
-        m_d->fieldModelInspectorTexture =
-            bgfx::createTexture2D (m_d->gameResolution[0],
-                                   m_d->gameResolution[1],
-                                   false,
-                                   0,
-                                   bgfx::TextureFormat::BGRA8,
-                                   BGFX_TEXTURE_RT | tsFlags);
-        m_d->fieldModelInspectorDepth = bgfx::createTexture2D (m_d->gameResolution[0],
-                                                               m_d->gameResolution[1],
-                                                               false,
-                                                               0,
-                                                               bgfx::TextureFormat::D24S8,
-                                                               BGFX_TEXTURE_RT | tsFlags);
-        array<bgfx::Attachment, 2> attachements;
-        attachements[0].init (m_d->fieldModelInspectorTexture);
-        attachements[1].init (m_d->fieldModelInspectorDepth);
-        m_d->fieldModelInspectorFB = bgfx::createFrameBuffer (2, &attachements[0], true);
-    }
-
-    bgfx::setViewFrameBuffer (m_d->debugViewId, m_d->fieldModelInspectorFB);
-    bgfx::setViewRect (
-        m_d->debugViewId, 0, 0, m_d->gameResolution[0], m_d->gameResolution[1]);
 }
 
 void bgfxHandle_t::drawBackground ()

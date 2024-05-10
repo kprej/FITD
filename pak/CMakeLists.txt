@@ -25,6 +25,8 @@ add_executable (pak
     body.cpp
     body.h
     buffer.h
+    debugHandle.cpp
+    debugHandle.h
     game.cpp
     game.h
     imgui_impl_bgfx.cpp
