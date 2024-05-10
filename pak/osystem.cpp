@@ -94,6 +94,7 @@ void osystem_t::init (int argc_, char *argv_[])
     m_d->lastTime = SDL_GetTicks ();
 
     GS ()->handle.init ();
+    GS ()->camera.init ();
 
     loadPaks ();
     detectGame ();

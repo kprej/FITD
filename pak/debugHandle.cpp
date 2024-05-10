@@ -1,5 +1,6 @@
 #include "debugHandle.h"
 #include "imgui_impl_bgfx.h"
+#include "osystem.h"
 
 #include <backends/imgui_impl_sdl3.h>
 #include <bgfx/platform.h>
@@ -21,7 +22,6 @@ public:
         , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
         , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
         , oldWindowSize (-1, -1)
-        , gameResolution (320, 200)
         , debugViewId (2)
     {
     }
@@ -31,7 +31,6 @@ public:
     bgfx::TextureHandle fieldModelInspectorDepth;
 
     ImVec2 oldWindowSize;
-    ImVec2 gameResolution;
 
     uint8_t debugViewId;
 };
@@ -77,25 +76,10 @@ void debugHandle_t::startFrame ()
         ImGui::EndMainMenuBar ();
     }
 
-    if (ImGui::Begin ("Game"))
+    if ((GS ()->width != m_d->oldWindowSize[0]) ||
+        (GS ()->height != m_d->oldWindowSize[1]))
     {
-        ImVec2 currentWindowSize = ImGui::GetContentRegionAvail ();
-
-        currentWindowSize[0] = std::max<int> (currentWindowSize[0], 1);
-        currentWindowSize[1] = std::max<int> (currentWindowSize[1], 1);
-
-        m_d->gameResolution = currentWindowSize;
-    }
-    else
-    {
-        m_d->gameResolution = {320, 200};
-    }
-    ImGui::End ();
-
-    if ((m_d->gameResolution[0] != m_d->oldWindowSize[0]) ||
-        (m_d->gameResolution[1] != m_d->oldWindowSize[1]))
-    {
-        m_d->oldWindowSize = m_d->gameResolution;
+        m_d->oldWindowSize = {GS ()->width, GS ()->height};
 
         if (bgfx::isValid (m_d->fieldModelInspectorFB))
         {
@@ -109,14 +93,14 @@ void debugHandle_t::startFrame ()
                                  | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
 
         m_d->fieldModelInspectorTexture =
-            bgfx::createTexture2D (m_d->gameResolution[0],
-                                   m_d->gameResolution[1],
+            bgfx::createTexture2D (GS ()->width,
+                                   GS ()->height,
                                    false,
                                    0,
                                    bgfx::TextureFormat::BGRA8,
                                    BGFX_TEXTURE_RT | tsFlags);
-        m_d->fieldModelInspectorDepth = bgfx::createTexture2D (m_d->gameResolution[0],
-                                                               m_d->gameResolution[1],
+        m_d->fieldModelInspectorDepth = bgfx::createTexture2D (GS ()->width,
+                                                               GS ()->height,
                                                                false,
                                                                0,
                                                                bgfx::TextureFormat::D24S8,
@@ -128,8 +112,9 @@ void debugHandle_t::startFrame ()
     }
 
     bgfx::setViewFrameBuffer (m_d->debugViewId, m_d->fieldModelInspectorFB);
-    bgfx::setViewRect (
-        m_d->debugViewId, 0, 0, m_d->gameResolution[0], m_d->gameResolution[1]);
+    bgfx::setViewRect (m_d->debugViewId, 0, 0, GS ()->width, GS ()->height);
+
+    draw.fire ();
 }
 
 void debugHandle_t::endFrame ()

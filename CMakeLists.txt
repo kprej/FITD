@@ -27,9 +27,15 @@ FetchContent_Declare(SDL GIT_REPOSITORY https://github.com/libsdl-org/SDL GIT_TA
 FetchContent_Declare(soloud GIT_REPOSITORY https://github.com/jarikomppa/soloud.git GIT_TAG master)
 FetchContent_Declare(zlib GIT_REPOSITORY https://github.com/madler/zlib.git GIT_TAG master)
 
+FetchContent_Declare(nanosigslot GIT_REPOSITORY https://github.com/NoAvailableAlias/nano-signal-slot
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+    )
+
 FetchContent_MakeAvailable(bgfx)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(iconfontheader)
+FetchContent_MakeAvailable(nanosigslot)
 FetchContent_MakeAvailable(plog)
 FetchContent_MakeAvailable(SDL)
 FetchContent_MakeAvailable(zlib)

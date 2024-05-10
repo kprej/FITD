@@ -25,6 +25,8 @@ add_executable (pak
     body.cpp
     body.h
     buffer.h
+    camera.cpp
+    camera.h
     debugHandle.cpp
     debugHandle.h
     game.cpp
@@ -46,5 +48,5 @@ add_executable (pak
     ${SHADERS}
     )
 
-target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD)
+target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD ${nanosigslot_SOURCE_DIR})
 target_link_libraries(pak bgfx bx glm imgui plog SDL3::SDL3 zlib)

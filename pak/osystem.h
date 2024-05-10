@@ -1,5 +1,6 @@
 #pragma once
 #include "bgfxHandle.h"
+#include "camera.h"
 #include "debugHandle.h"
 #include "game.h"
 #include "pakFile.h"
@@ -7,7 +8,6 @@
 
 #include <SDL3/SDL.h>
 
-#include <array>
 #include <map>
 #include <memory>
 #include <string>
@@ -22,6 +22,11 @@ struct gameState_t
     std::map<std::string, pakFile_t> paks;
 
     std::unique_ptr<game_t> game;
+
+    float width;
+    float height;
+
+    camera_t camera;
 
     bgfxHandle_t handle;
     debugHandle_t debug;

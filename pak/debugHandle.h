@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SDL3/SDL.h>
+#include <nano_signal_slot.hpp>
 
 #include <memory>
 
@@ -10,6 +11,11 @@ class debugHandle_t
 public:
     ~debugHandle_t ();
     debugHandle_t ();
+
+    /// \name Signals
+    /// @{
+    Nano::Signal<void ()> draw;
+    /// @}
 
 protected:
     friend class bgfxHandle_t;

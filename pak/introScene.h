@@ -13,6 +13,7 @@ public:
     void enter ();
     void run ();
     void exit ();
+    void debug ();
 
 private:
     class private_t;

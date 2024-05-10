@@ -3,6 +3,8 @@
 #include "body.h"
 #include "osystem.h"
 
+#include <imgui.h>
+
 #include <map>
 #include <string>
 using namespace std;
@@ -23,13 +25,13 @@ class introScene_t::private_t
 public:
     ~private_t () = default;
     private_t ()
-        : bodies ()
+        : tatou ()
         , state (ENTER)
         , introTime (0)
     {
     }
 
-    map<string, body_t> bodies;
+    body_t tatou;
     state_t state;
     uint16_t introTime;
 };
@@ -41,14 +43,16 @@ introScene_t::~introScene_t ()
 introScene_t::introScene_t ()
     : m_d (make_shared<private_t> ())
 {
-    m_d->bodies["tatou"].parseData (
+    m_d->tatou.parseData (
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
 
-    m_d->bodies["tatou"].rotateZ (180);
-    m_d->bodies["tatou"].rotateY (90);
-    m_d->bodies["tatou"].pos (0, 0, 300);
+    m_d->tatou.rotateZ (180);
+    m_d->tatou.rotateY (90);
+    m_d->tatou.pos (0, 0, 300);
 
-    m_d->bodies["tatou"].scale (0.08);
+    m_d->tatou.scale (0.08);
+
+    GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
 
 void introScene_t::enter ()
@@ -66,8 +70,8 @@ void introScene_t::enter ()
 void introScene_t::run ()
 {
     m_d->introTime += GS ()->delta;
-    GS ()->handle.drawBody (m_d->bodies["tatou"]);
-    m_d->bodies["tatou"].rotateY (0.1);
+    GS ()->handle.drawBody (m_d->tatou);
+    // m_d->tatou.rotateY (0.1);
     switch (m_d->state)
     {
     case ENTER:
@@ -95,4 +99,17 @@ void introScene_t::run ()
 void introScene_t::exit ()
 {
     GS ()->handle.fadeOutBackground (1000);
+}
+
+void introScene_t::debug ()
+{
+    if (ImGui::Begin ("Intro Scene"))
+    {
+        if (ImGui::TreeNode ("Tatou"))
+        {
+            m_d->tatou.debug ();
+            ImGui::TreePop ();
+        }
+    }
+    ImGui::End ();
 }

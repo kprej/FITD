@@ -11,6 +11,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <imgui.h>
+
 #include <cassert>
 using namespace std;
 
@@ -336,4 +338,11 @@ glm::mat4 body_t::transform () const
           glm::scale (mat, glm::vec3 {m_d->scale, m_d->scale, m_d->scale});
 
     return mat;
+}
+
+void body_t::debug ()
+{
+    ImGui::InputFloat3 ("Position", glm::value_ptr (m_d->position));
+    ImGui::InputFloat3 ("Rotation", glm::value_ptr (m_d->rotation));
+    ImGui::InputFloat ("Scale", &m_d->scale);
 }

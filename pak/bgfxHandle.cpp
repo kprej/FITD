@@ -35,7 +35,6 @@ public:
         , noiseShader (BGFX_INVALID_HANDLE)
         , rampShader (BGFX_INVALID_HANDLE)
         , oldWindowSize (-1, -1)
-        , gameResolution (320, 200)
         , gameViewId (0)
         , debugViewId (2)
         , backgroundMode (backgroundMode_t::_2D)
@@ -68,7 +67,6 @@ public:
     bgfx::ProgramHandle rampShader;
 
     glm::vec2 oldWindowSize;
-    glm::vec2 gameResolution;
 
     uint8_t gameViewId;
     uint8_t debugViewId;
@@ -211,8 +209,8 @@ void bgfxHandle_t::startFrame ()
         GS ()->debug.startFrame ();
     }
 
-    m_d->gameResolution[0] = m_d->outputResolution[0];
-    m_d->gameResolution[1] = m_d->outputResolution[1];
+    GS ()->width = m_d->outputResolution[0];
+    GS ()->height = m_d->outputResolution[1];
 
     bgfx::setViewFrameBuffer (m_d->gameViewId,
                               BGFX_INVALID_HANDLE); // bind the backbuffer
@@ -225,23 +223,13 @@ void bgfxHandle_t::startFrame ()
 
     bgfx::setViewName (m_d->gameViewId, "Game");
     bgfx::setViewMode (m_d->gameViewId, bgfx::ViewMode::Sequential);
-    const glm::vec3 at = {0.0f, 0.0f, 0.0f};
-    const glm::vec3 eye = {0.0f, 0.0f, -65.0f};
-    const glm::vec3 up = {0.0f, 1.0f, 0.0f};
-
-    auto view = glm::lookAt (eye, at, up);
 
     const bgfx::Caps *caps = bgfx::getCaps ();
 
-    auto const proj =
-        glm::perspective (glm::radians (60.f),
-                          float (m_d->gameResolution[0]) / float (m_d->gameResolution[1]),
-                          0.1f,
-                          1000.0f);
-
     // Set view and projection matrix for view 0.
-    bgfx::setViewTransform (
-        m_d->gameViewId, glm::value_ptr (view), glm::value_ptr (proj));
+    bgfx::setViewTransform (m_d->gameViewId,
+                            glm::value_ptr (GS ()->camera.view ()),
+                            glm::value_ptr (GS ()->camera.projection ()));
 
     bgfx::touch (m_d->gameViewId);
 
@@ -313,9 +301,9 @@ void bgfxHandle_t::drawBody (body_t const &body_)
         bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
         bgfx::setUniform (m_d->polyColorUniform, &p.color);
 
-        unsigned long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
-                              BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
-                              BGFX_STATE_CULL_CCW | BGFX_STATE_MSAA;
+        unsigned long long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                                   BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
+                                   BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
 
         if (p.size == 2)
             state |= BGFX_STATE_PT_LINES;
