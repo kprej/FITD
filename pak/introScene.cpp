@@ -45,8 +45,8 @@ introScene_t::introScene_t ()
 {
     m_d->tatou.parseData (GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
 
-    // m_d->tatou.rotateY (90);
-    m_d->tatou.pos (0, 0, 0);
+    m_d->tatou.rotateY (90);
+    m_d->tatou.scale (0.4f);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
@@ -67,7 +67,7 @@ void introScene_t::run ()
 {
     m_d->introTime += GS ()->delta;
     GS ()->handle.drawBody (m_d->tatou);
-    // m_d->tatou.rotateY (0.1);
+    m_d->tatou.rotateY (0.2);
     switch (m_d->state)
     {
     case ENTER:

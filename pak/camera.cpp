@@ -19,15 +19,15 @@ public:
     ~private_t () = default;
     private_t ()
         : up (0.f, 1.f, 0.f)
-        , eye (0.0f, 0.0f, 1.0f)
+        , eye (0.0f, -0.1f, 1.0f)
         , center (0.f, 0.f, 0.f)
         , fov (60.f)
-        , near (-1000.f)
+        , near (-10000.f)
         , far (1000.f)
-        , left (-1280)
-        , right (1280)
-        , top (-800)
-        , bottom (800)
+        , left (1280)
+        , right (-1280)
+        , top (800)
+        , bottom (-800)
     {
     }
 
@@ -59,8 +59,11 @@ void camera_t::init ()
 
 glm::mat4 camera_t::view ()
 {
-    // return glm::mat4 (1.0f);
-    return glm::mat4 (1.0f) * glm::lookAt (m_d->eye, m_d->center, m_d->up);
+    auto const look = glm::lookAt (m_d->eye, m_d->center, m_d->up);
+    if (glm::isnan (look[0][0]))
+        return glm::mat4 (1.0f);
+
+    return look;
 }
 
 glm::mat4 camera_t::projection ()
