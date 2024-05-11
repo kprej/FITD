@@ -18,13 +18,16 @@ public:
     ~private_t () {}
 
     private_t ()
-        : fieldModelInspectorFB (BGFX_INVALID_HANDLE)
+        : init (false)
+        , fieldModelInspectorFB (BGFX_INVALID_HANDLE)
         , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
         , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
         , oldWindowSize (-1, -1)
         , debugViewId (2)
     {
     }
+
+    bool init;
 
     bgfx::FrameBufferHandle fieldModelInspectorFB;
     bgfx::TextureHandle fieldModelInspectorTexture;
@@ -46,7 +49,6 @@ debugHandle_t::debugHandle_t ()
 
 void debugHandle_t::init (SDL_Window *window_)
 {
-
     PLOGD << "Init ImGui";
     ImGui::CreateContext ();
 
@@ -126,6 +128,9 @@ void debugHandle_t::endFrame ()
 
 void debugHandle_t::shutdown ()
 {
+    if (!m_d->init)
+        return;
+
     PLOGD << "Shutdown ImGui";
     ImGui_ImplSDL3_Shutdown ();
     ImGui_Implbgfx_Shutdown ();

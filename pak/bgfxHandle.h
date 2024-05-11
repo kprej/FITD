@@ -48,7 +48,8 @@ protected:
     bool windowHidden () const;
 
 private:
-    void startDebugFrame ();
+    void debug ();
+
     void drawBackground ();
 
     void processFadeIn ();

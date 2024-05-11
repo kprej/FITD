@@ -43,14 +43,10 @@ introScene_t::~introScene_t ()
 introScene_t::introScene_t ()
     : m_d (make_shared<private_t> ())
 {
-    m_d->tatou.parseData (
-        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
+    m_d->tatou.parseData (GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
 
-    m_d->tatou.rotateZ (180);
-    m_d->tatou.rotateY (90);
-    m_d->tatou.pos (0, 0, 300);
-
-    m_d->tatou.scale (0.08);
+    // m_d->tatou.rotateY (90);
+    m_d->tatou.pos (0, 0, 0);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }

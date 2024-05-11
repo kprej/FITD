@@ -12,6 +12,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
+#include <imgui.h>
+
 #include <plog/Log.h>
 
 #include <array>
@@ -39,6 +41,8 @@ public:
         , debugViewId (2)
         , backgroundMode (backgroundMode_t::_2D)
         , alpha (0)
+        , bodyState (0)
+        , backState (0)
     {
     }
 
@@ -79,6 +83,9 @@ public:
     SDL_Window *window;
     array<byte, 768> currentPalette;
     float alpha;
+
+    unsigned long long bodyState;
+    unsigned long long backState;
 };
 
 bgfxHandle_t::~bgfxHandle_t ()
@@ -149,6 +156,7 @@ void bgfxHandle_t::init ()
     }
 
     GS ()->debug.init (m_d->window);
+    GS ()->debug.draw.connect<&bgfxHandle_t::debug> (this);
 
     m_d->backgroundLayout.begin ()
         .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
@@ -303,7 +311,7 @@ void bgfxHandle_t::drawBody (body_t const &body_)
 
         unsigned long long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                                    BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
-                                   BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
+                                   BGFX_STATE_CULL_CCW | BGFX_STATE_MSAA;
 
         if (p.size == 2)
             state |= BGFX_STATE_PT_LINES;
@@ -341,6 +349,14 @@ void bgfxHandle_t::shutdown ()
     SDL_DestroyWindow (m_d->window);
 }
 
+void bgfxHandle_t::debug ()
+{
+    if (ImGui::Begin ("BGFX"))
+    {
+    }
+    ImGui::End ();
+}
+
 void bgfxHandle_t::drawBackground ()
 {
     if (m_d->backgroundMode != backgroundMode_t::_2D)
@@ -376,7 +392,7 @@ void bgfxHandle_t::drawBackground ()
     // 0
     pVertices->position[0] = 0.f;
     pVertices->position[1] = 0.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 0.f;
     pVertices->texcoord[1] = 0.f;
     pVertices++;
@@ -384,7 +400,7 @@ void bgfxHandle_t::drawBackground ()
     // 2
     pVertices->position[0] = 320.f;
     pVertices->position[1] = 200.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 1.f;
     pVertices->texcoord[1] = 1.f;
     pVertices++;
@@ -392,7 +408,7 @@ void bgfxHandle_t::drawBackground ()
     // 1
     pVertices->position[0] = 320.f;
     pVertices->position[1] = 0.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 1.f;
     pVertices->texcoord[1] = 0.f;
     pVertices++;
@@ -401,7 +417,7 @@ void bgfxHandle_t::drawBackground ()
     // 3
     pVertices->position[0] = 0.f;
     pVertices->position[1] = 0.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 0.f;
     pVertices->texcoord[1] = 0.f;
     pVertices++;
@@ -409,7 +425,7 @@ void bgfxHandle_t::drawBackground ()
     // 4
     pVertices->position[0] = 0.f;
     pVertices->position[1] = 200.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 0.f;
     pVertices->texcoord[1] = 1.f;
     pVertices++;
@@ -417,7 +433,7 @@ void bgfxHandle_t::drawBackground ()
     // 5
     pVertices->position[0] = 320.f;
     pVertices->position[1] = 200.f;
-    pVertices->position[2] = 1000.f;
+    pVertices->position[2] = 100.f;
     pVertices->texcoord[0] = 1.f;
     pVertices->texcoord[1] = 1.f;
     pVertices++;
