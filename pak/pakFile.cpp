@@ -215,3 +215,8 @@ vector<byte> const &pakFile_t::data (uint8_t index_) const
 {
     return m_d->paks.at (index_).data ();
 }
+
+vector<pak_t> const &pakFile_t::paks () const
+{
+    return m_d->paks;
+}

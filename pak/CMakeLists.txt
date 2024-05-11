@@ -40,6 +40,8 @@ add_executable (pak
     osystem.h
     pakFile.cpp
     pakFile.h
+    sound.cpp
+    sound.h
     types.cpp
     types.h
     unpack.cpp
@@ -49,4 +51,4 @@ add_executable (pak
     )
 
 target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD ${nanosigslot_SOURCE_DIR})
-target_link_libraries(pak bgfx bx glm imgui plog SDL3::SDL3 zlib)
+target_link_libraries(pak bgfx bx glm imgui plog SDL3::SDL3 SDL3_mixer::SDL3_mixer zlib)

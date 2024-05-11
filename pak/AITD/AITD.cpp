@@ -3,6 +3,7 @@
 #include "introScene.h"
 #include "osystem.h"
 #include "pakFile.h"
+#include "sound.h"
 
 #include <plog/Log.h>
 
@@ -29,6 +30,16 @@ aitd_t::~aitd_t ()
 aitd_t::aitd_t ()
     : m_d (make_shared<private_t> ())
 {
+}
+
+void aitd_t::_init ()
+{
+    for (auto const &pak : GS ()->paks.at ("LISTSAMP").paks ())
+    {
+        sound_t sample;
+        sample.init (pak.data ());
+        GS ()->samples.push_back (sample);
+    }
 }
 
 void aitd_t::_start ()

@@ -12,7 +12,7 @@
 #include <plog/Log.h>
 
 #include <SDL3/SDL.h>
-#include <SDL3/SDL_mutex.h>
+#include <SDL3_mixer/SDL_mixer.h>
 
 #include <filesystem>
 using namespace std;
@@ -90,6 +90,32 @@ void osystem_t::init (int argc_, char *argv_[])
         PLOGF << SDL_GetError ();
     }
 
+    PLOGD << "Init SDL Mixer";
+    SDL_AudioSpec spec;
+
+    /* Initialize variables */
+    spec.freq = MIX_DEFAULT_FREQUENCY;
+    spec.format = MIX_DEFAULT_FORMAT;
+    spec.channels = MIX_DEFAULT_CHANNELS;
+
+    /* Open the audio device */
+    auto ret = Mix_OpenAudio (0, &spec);
+    if (ret < 0)
+    {
+        PLOGF << "Couldn't open audio: " << SDL_GetError ();
+    }
+    else
+    {
+        Mix_QuerySpec (&spec.freq, &spec.format, &spec.channels);
+        SDL_Log ("Opened audio at %d Hz %d bit%s %s",
+                 spec.freq,
+                 (spec.format & 0xFF),
+                 (SDL_AUDIO_ISFLOAT (spec.format) ? " (float)" : ""),
+                 (spec.channels > 2)   ? "surround"
+                 : (spec.channels > 1) ? "stereo"
+                                       : "mono");
+    }
+
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
     m_d->lastTime = SDL_GetTicks ();
 
@@ -127,6 +153,7 @@ void osystem_t::detectGame ()
         // currentCVarTable = AITD1Knownm_d->CVars;
 
         GS ()->game = make_unique<aitd_t> ();
+        GS ()->game->init ();
 
         return;
     }

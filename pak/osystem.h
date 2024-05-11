@@ -4,6 +4,7 @@
 #include "debugHandle.h"
 #include "game.h"
 #include "pakFile.h"
+#include "sound.h"
 #include "types.h"
 
 #include <SDL3/SDL.h>
@@ -32,6 +33,8 @@ struct gameState_t
     debugHandle_t debug;
 
     uint64_t delta;
+
+    std::vector<sound_t> samples;
 };
 
 struct input_t

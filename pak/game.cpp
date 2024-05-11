@@ -8,6 +8,11 @@ game_t::game_t ()
 {
 }
 
+void game_t::init ()
+{
+    _init ();
+}
+
 void game_t::start ()
 {
     _start ();
@@ -16,6 +21,11 @@ void game_t::start ()
 void game_t::readBook (int index_, int type_)
 {
     _readBook (index_, type_);
+}
+
+void game_t::_init ()
+{
+    // no-op
 }
 
 void game_t::_start ()

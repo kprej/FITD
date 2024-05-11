@@ -48,6 +48,7 @@ public:
     pak_t const &pak (uint8_t index_) const;
 
     std::vector<std::byte> const &data (uint8_t index_) const;
+    std::vector<pak_t> const &paks () const;
 
 private:
     class private_t;

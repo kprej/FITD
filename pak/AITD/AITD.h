@@ -40,6 +40,7 @@ public:
     aitd_t ();
 
 private:
+    void _init () final;
     void _start () final;
     void _readBook (int index_, int type_) final;
 

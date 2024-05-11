@@ -19,7 +19,7 @@ public:
     ~private_t () = default;
     private_t ()
         : up (0.f, 1.f, 0.f)
-        , eye (0.0f, -0.1f, 1.0f)
+        , eye (0.0f, 0.f, 0.0f)
         , center (0.f, 0.f, 0.f)
         , fov (60.f)
         , near (-10000.f)
