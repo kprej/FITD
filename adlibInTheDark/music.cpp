@@ -175,7 +175,7 @@ void sendAdlib (int regIdx, int value)
     YM3812Write (0, 1, value);
 }
 
-#define musicSync 3000
+int musicSync = 3000;
 int musicTimer = 0;
 int nextUpdateTimer = musicSync;
 

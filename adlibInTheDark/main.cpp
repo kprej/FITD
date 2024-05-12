@@ -1,5 +1,9 @@
 #include "music.h"
 
+#include <imgui.h>
+#include <imgui_impl_sdl3.h>
+#include <imgui_impl_sdlrenderer3.h>
+
 #include <plog/Appenders/ColorConsoleAppender.h>
 #include <plog/Formatters/TxtFormatter.h>
 #include <plog/Init.h>
@@ -21,9 +25,11 @@ int main (int argc_, char *argv_[])
     {
         PLOGF << SDL_GetError ();
     }
+
+    SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
     auto window = SDL_CreateWindow ("ADLIB In The DARK",
-                                    180,
-                                    80,
+                                    1280,
+                                    720,
                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
 
     if (!window)
@@ -32,11 +38,24 @@ int main (int argc_, char *argv_[])
         return 1;
     }
 
+    auto renderer = SDL_CreateRenderer (window, NULL, 0);
+    if (!renderer)
+        return 1;
+
+    ImGui::CreateContext ();
+
+    if (!ImGui_ImplSDL3_InitForSDLRenderer (window, renderer))
+    {
+        PLOGF << "Failed to init ImGui";
+        return 1;
+    }
+    ImGui_ImplSDLRenderer3_Init (renderer);
+
     SDL_AudioSpec spec;
 
     /* Initialize variables */
-    spec.freq = MIX_DEFAULT_FREQUENCY / 700;
-    spec.format = MIX_DEFAULT_FORMAT;
+    spec.freq = MIX_DEFAULT_FREQUENCY;
+    spec.format = SDL_AUDIO_S16;
     spec.channels = MIX_DEFAULT_CHANNELS;
 
     /* Open the audio device */
@@ -44,6 +63,7 @@ int main (int argc_, char *argv_[])
     if (ret < 0)
     {
         PLOGF << "Couldn't open audio: " << SDL_GetError ();
+        return 1;
     }
     else
     {
@@ -51,6 +71,7 @@ int main (int argc_, char *argv_[])
         PLOGD << "Opened audio at " << spec.freq << " Hz " << (spec.format & 0xFF)
               << "bit";
     }
+
     Mix_HookMusic (musicUpdate, NULL);
 
     PLOGD << initMusicDriver ();
@@ -58,19 +79,54 @@ int main (int argc_, char *argv_[])
     setFile (pakFile_t (filesystem::path ("LISTMUS.PAK")));
 
     playMusic (6);
+    ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
 
     while (true)
     {
+        ImGui_ImplSDLRenderer3_NewFrame ();
+        ImGui_ImplSDL3_NewFrame ();
+        ImGui::NewFrame ();
+
         SDL_Event event;
 
         while (SDL_PollEvent (&event))
         {
+            ImGui_ImplSDL3_ProcessEvent (&event);
             switch (event.type)
             {
             case SDL_EVENT_QUIT:
                 return 0;
             }
         }
+
+        if (ImGui::BeginMainMenuBar ())
+        {
+            if (ImGui::BeginMenu ("Windows"))
+            {
+                ImGui::EndMenu ();
+            }
+            ImGui::Text (" %.2f FPS (%.2f ms)",
+                         ImGui::GetIO ().Framerate,
+                         1000.0f / ImGui::GetIO ().Framerate);
+
+            ImGui::EndMainMenuBar ();
+        }
+
+        if (ImGui::Begin ("Sound"))
+        {
+            ImGui::InputInt ("Sync", &musicSync);
+            ImGui::End ();
+        }
+
+        ImGui::Render ();
+        SDL_SetRenderDrawColor (renderer,
+                                (Uint8)(clear_color.x * 255),
+                                (Uint8)(clear_color.y * 255),
+                                (Uint8)(clear_color.z * 255),
+                                (Uint8)(clear_color.w * 255));
+        SDL_RenderClear (renderer);
+        ImGui_ImplSDLRenderer3_RenderDrawData (ImGui::GetDrawData ());
+        SDL_RenderPresent (renderer);
     }
 
     return 0;

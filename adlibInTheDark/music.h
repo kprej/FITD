@@ -9,6 +9,7 @@ extern int nextMusic;
 extern unsigned int musicChrono;
 extern short int currentMusic;
 extern pakFile_t musicPak;
+extern int musicSync;
 
 int initMusicDriver (void);
 void setFile (pakFile_t const &pak_);

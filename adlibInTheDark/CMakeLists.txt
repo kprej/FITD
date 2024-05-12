@@ -9,4 +9,4 @@ add_executable (adlibInTheDark
     )
 
 
-target_link_libraries(adlibInTheDark pakUtil plog SDL3::SDL3 SDL3_mixer::SDL3_mixer)
+target_link_libraries(adlibInTheDark imgui pakUtil plog SDL3::SDL3 SDL3_mixer::SDL3_mixer)
