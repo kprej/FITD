@@ -6,7 +6,7 @@
 #include <cassert>
 #include <cstdlib>
 
-bool PLAYING;
+bool PLAYING = false;
 int musicVolume = 0x7F;
 short int currentMusic = 9999;
 pakFile_t musicPak;
@@ -363,7 +363,7 @@ int initialialize (void *dummy)
 {
     int i;
 
-    if (!YM3812Init (1, OPL_INTERNAL_FREQ, 44100))
+    if (YM3812Init (1, OPL_INTERNAL_FREQ, 44100))
         return 0;
 
     for (i = 0; i < 11; i++)

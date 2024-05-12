@@ -56,9 +56,8 @@ int main (int argc_, char *argv_[])
     PLOGD << initMusicDriver ();
 
     setFile (pakFile_t (filesystem::path ("LISTMUS.PAK")));
-    Mix_PauseAudio (0);
 
-    playMusic (0);
+    playMusic (4);
 
     while (true)
     {
