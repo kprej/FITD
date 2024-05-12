@@ -48,4 +48,7 @@ add_subdirectory( deps/imgui )
 FetchContent_MakeAvailable(SDL_mixer)
 FetchContent_MakeAvailable(zlib)
 
-add_subdirectory( pak )
+add_subdirectory(library/pakUtil)
+
+add_subdirectory(adlibInTheDark)
+add_subdirectory(pak)

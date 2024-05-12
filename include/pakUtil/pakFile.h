@@ -24,6 +24,7 @@ public:
     pak_t ();
 
     std::vector<std::byte> const &data () const;
+    uint8_t *raw () const;
 
 protected:
     friend class pakFile_t;
@@ -44,6 +45,7 @@ class pakFile_t
 public:
     ~pakFile_t ();
     pakFile_t ();
+
     pakFile_t (std::filesystem::path const &file_);
 
     pak_t const &pak (uint8_t index_) const;
