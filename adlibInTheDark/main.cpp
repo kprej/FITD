@@ -35,7 +35,7 @@ int main (int argc_, char *argv_[])
     SDL_AudioSpec spec;
 
     /* Initialize variables */
-    spec.freq = MIX_DEFAULT_FREQUENCY;
+    spec.freq = MIX_DEFAULT_FREQUENCY / 700;
     spec.format = MIX_DEFAULT_FORMAT;
     spec.channels = MIX_DEFAULT_CHANNELS;
 
@@ -57,7 +57,7 @@ int main (int argc_, char *argv_[])
 
     setFile (pakFile_t (filesystem::path ("LISTMUS.PAK")));
 
-    playMusic (4);
+    playMusic (6);
 
     while (true)
     {

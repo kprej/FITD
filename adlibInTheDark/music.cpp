@@ -175,7 +175,7 @@ void sendAdlib (int regIdx, int value)
     YM3812Write (0, 1, value);
 }
 
-#define musicSync 1500
+#define musicSync 3000
 int musicTimer = 0;
 int nextUpdateTimer = musicSync;
 
@@ -189,7 +189,6 @@ void musicUpdate (void *udata, uint8_t *stream, int len)
     if (PLAYING)
     {
         int fillStatus = 0;
-
         while (fillStatus < len)
         {
             int timeBeforNextUpdate = nextUpdateTimer - musicTimer;
@@ -916,7 +915,6 @@ void playMusic (int musicNumber)
             loadMusic (0, musicPtr);
 
             fadeMusic (musicVolume, 0, 0x80);
-            PLOGD << musicVolume;
             PLAYING = true;
         }
     }
