@@ -48,25 +48,30 @@ int main (int argc_, char *argv_[])
     else
     {
         Mix_QuerySpec (&spec.freq, &spec.format, &spec.channels);
-        SDL_Log ("Opened audio at %d Hz %d bit%s %s",
-                 spec.freq,
-                 (spec.format & 0xFF),
-                 (SDL_AUDIO_ISFLOAT (spec.format) ? " (float)" : ""),
-                 (spec.channels > 2)   ? "surround"
-                 : (spec.channels > 1) ? "stereo"
-                                       : "mono");
+        PLOGD << "Opened audio at " << spec.freq << " Hz " << (spec.format & 0xFF)
+              << "bit";
     }
+    Mix_HookMusic (musicUpdate, NULL);
 
     PLOGD << initMusicDriver ();
 
-    Mix_HookMusic (musicUpdate, NULL);
-
     setFile (pakFile_t (filesystem::path ("LISTMUS.PAK")));
+    Mix_PauseAudio (0);
 
     playMusic (0);
 
     while (true)
     {
+        SDL_Event event;
+
+        while (SDL_PollEvent (&event))
+        {
+            switch (event.type)
+            {
+            case SDL_EVENT_QUIT:
+                return 0;
+            }
+        }
     }
 
     return 0;

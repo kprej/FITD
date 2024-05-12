@@ -6,8 +6,9 @@
 #include <cassert>
 #include <cstdlib>
 
+bool PLAYING;
 int musicVolume = 0x7F;
-short int currentMusic;
+short int currentMusic = 9999;
 pakFile_t musicPak;
 
 unsigned int musicChrono;
@@ -185,10 +186,7 @@ void setFile (pakFile_t const &pak_)
 
 void musicUpdate (void *udata, uint8_t *stream, int len)
 {
-#ifdef UNIX
-    return 0;
-#endif
-    if (OPLinitialized)
+    if (PLAYING)
     {
         int fillStatus = 0;
 
@@ -365,13 +363,8 @@ int initialialize (void *dummy)
 {
     int i;
 
-    // OPLBuildTables(FMOPL_ENV_BITS_HQ, FMOPL_EG_ENT_HQ);
-
-    YM3812Init (1, OPL_INTERNAL_FREQ, 44100);
-    /*  virtualOpl = OPLCreate(OPL_TYPE_YM3812, OPL_INTERNAL_FREQ, 44100);
-
-      if(!virtualOpl)
-        return 0; */
+    if (!YM3812Init (1, OPL_INTERNAL_FREQ, 44100))
+        return 0;
 
     for (i = 0; i < 11; i++)
     {
@@ -385,7 +378,7 @@ int initialialize (void *dummy)
 
     OPLinitialized = 1;
 
-    return 0;
+    return 1;
 }
 
 int getSignature (void *dummy)
@@ -908,33 +901,25 @@ int fadeMusic (int param1, int param2, int param3)
 
 void playMusic (int musicNumber)
 {
-#ifdef NO_SOUND
-    return;
-#endif
-    //  if(musicEnabled)
+    if (currentMusic != musicNumber)
     {
-        if (currentMusic != musicNumber)
+        uint8_t *musicPtr;
+
+        currentMusic = musicNumber;
+
+        if (musicNumber >= 0)
         {
-            uint8_t *musicPtr;
+            fadeMusic (0, 0, 0x40);
 
-            currentMusic = musicNumber;
+            musicPtr = musicPak.pak (musicNumber).raw ();
 
-            if (musicNumber >= 0)
-            {
-                fadeMusic (0, 0, 0x40);
+            loadMusic (0, musicPtr);
 
-                musicPtr = musicPak.pak (musicNumber).raw ();
-
-                loadMusic (0, musicPtr);
-
-                fadeMusic (musicVolume, 0, 0x80);
-            }
+            fadeMusic (musicVolume, 0, 0x80);
+            PLOGD << musicVolume;
+            PLAYING = true;
         }
     }
-    /*  else
-      {
-        currentMusic = musicNumber;
-      } */
 }
 
 int updateLoop = 0;

@@ -11,7 +11,7 @@ set(SRC
     ${SRC_DIR}/unpack.h
     )
 
-add_library (pakUtil ${INC} ${SRC})
+add_library (pakUtil STATIC ${INC} ${SRC})
 
 target_include_directories(pakUtil PUBLIC ${INC_DIR})
 target_link_libraries(pakUtil plog zlib)

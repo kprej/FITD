@@ -4,6 +4,7 @@
 
 #include <cstdint>
 
+extern bool PLAYING;
 extern int nextMusic;
 extern unsigned int musicChrono;
 extern short int currentMusic;
