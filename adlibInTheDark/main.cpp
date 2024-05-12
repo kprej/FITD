@@ -72,13 +72,21 @@ int main (int argc_, char *argv_[])
               << "bit";
     }
 
-    Mix_HookMusic (musicUpdate, NULL);
+    musicPlayer_t *player = new musicPlayer_t ();
+    player->musicPak = pakFile_t (filesystem::path ("LISTMUS.PAK"));
+
+    Mix_HookMusic (musicUpdate, player);
 
     PLOGD << initMusicDriver ();
 
-    setFile (pakFile_t (filesystem::path ("LISTMUS.PAK")));
+    SDL_IOStream *stream = SDL_IOFromConstMem (player->musicPak.pak (0).raw (),
+                                               player->musicPak.pak (0).data ().size ());
 
-    playMusic (6);
+    auto music = Mix_LoadMUS_IO (stream, true);
+
+    Mix_PlayMusic (music, 0);
+    player->PLAYING = true;
+
     ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
 
     while (true)
@@ -101,10 +109,6 @@ int main (int argc_, char *argv_[])
 
         if (ImGui::BeginMainMenuBar ())
         {
-            if (ImGui::BeginMenu ("Windows"))
-            {
-                ImGui::EndMenu ();
-            }
             ImGui::Text (" %.2f FPS (%.2f ms)",
                          ImGui::GetIO ().Framerate,
                          1000.0f / ImGui::GetIO ().Framerate);
@@ -114,7 +118,11 @@ int main (int argc_, char *argv_[])
 
         if (ImGui::Begin ("Sound"))
         {
-            ImGui::InputInt ("Sync", &musicSync);
+
+            ImGui::Text ("Playing %i\n", player->PLAYING);
+            ImGui::Text ("FillStatus %i\n", player->fillStatus);
+            ImGui::Text ("Len %i\n", player->len);
+            ImGui::Text ("Time Before Next Update %i\n", player->timeBeforeNextUpdate);
             ImGui::End ();
         }
 

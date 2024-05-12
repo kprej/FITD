@@ -186,27 +186,32 @@ void setFile (pakFile_t const &pak_)
 
 void musicUpdate (void *udata, uint8_t *stream, int len)
 {
-    if (PLAYING)
+    musicPlayer_t *player = reinterpret_cast<musicPlayer_t *> (udata);
+
+    if (player->PLAYING)
     {
-        int fillStatus = 0;
-        while (fillStatus < len)
+        player->fillStatus = 0;
+        player->musicTimer = 0;
+        player->len = len;
+        while (player->fillStatus < len)
         {
-            int timeBeforNextUpdate = nextUpdateTimer - musicTimer;
+            player->timeBeforeNextUpdate = nextUpdateTimer - player->musicTimer;
 
-            if (timeBeforNextUpdate > (len - fillStatus))
+            if (player->timeBeforeNextUpdate > (len - player->fillStatus))
             {
-                timeBeforNextUpdate = len - fillStatus;
+                player->timeBeforeNextUpdate = len - player->fillStatus;
             }
 
-            if (timeBeforNextUpdate) // generate
+            if (player->timeBeforeNextUpdate) // generate
             {
-                YM3812UpdateOne (
-                    0, (int16_t *)(stream + fillStatus), (timeBeforNextUpdate) / 2);
-                fillStatus += timeBeforNextUpdate;
-                musicTimer += timeBeforNextUpdate;
+                YM3812UpdateOne (0,
+                                 (int16_t *)(stream + player->fillStatus),
+                                 (player->timeBeforeNextUpdate) / 2);
+                player->fillStatus += player->timeBeforeNextUpdate;
+                player->musicTimer += player->timeBeforeNextUpdate;
             }
 
-            if (musicTimer == nextUpdateTimer)
+            if (player->musicTimer == nextUpdateTimer)
             {
                 callMusicUpdate ();
 
@@ -898,12 +903,10 @@ int fadeMusic (int param1, int param2, int param3)
     return callMusicDrv (5, &fadeParam);
 }
 
-void playMusic (int musicNumber)
+void musicPlayer_t::playMusic (int musicNumber)
 {
     if (currentMusic != musicNumber)
     {
-        uint8_t *musicPtr;
-
         currentMusic = musicNumber;
 
         if (musicNumber >= 0)
