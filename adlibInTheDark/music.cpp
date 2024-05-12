@@ -191,19 +191,24 @@ void musicUpdate (void *udata, uint8_t *stream, int len)
     if (player->PLAYING)
     {
         player->fillStatus = 0;
-        player->musicTimer = 0;
         player->len = len;
-        while (player->fillStatus < len)
+        while (player->fillStatus < player->len)
         {
-            player->timeBeforeNextUpdate = nextUpdateTimer - player->musicTimer;
+            player->timeBeforeNextUpdate = player->nextUpdateTimer - player->musicTimer;
+            PLOGD << "Tim " << player->timeBeforeNextUpdate;
+            PLOGD << "Len " << player->len;
+            PLOGD << "TIMER " << player->nextUpdateTimer;
 
-            if (player->timeBeforeNextUpdate > (len - player->fillStatus))
+            if (player->timeBeforeNextUpdate > (player->len - player->fillStatus))
             {
-                player->timeBeforeNextUpdate = len - player->fillStatus;
+                PLOGD << "If one";
+                player->timeBeforeNextUpdate = player->len - player->fillStatus;
             }
 
             if (player->timeBeforeNextUpdate) // generate
             {
+                PLOGD << "Generate Tone " << player->fillStatus;
+                PLOGD << "Length " << (player->timeBeforeNextUpdate) / 2;
                 YM3812UpdateOne (0,
                                  (int16_t *)(stream + player->fillStatus),
                                  (player->timeBeforeNextUpdate) / 2);
@@ -211,11 +216,11 @@ void musicUpdate (void *udata, uint8_t *stream, int len)
                 player->musicTimer += player->timeBeforeNextUpdate;
             }
 
-            if (player->musicTimer == nextUpdateTimer)
+            if (player->musicTimer == player->nextUpdateTimer)
             {
                 callMusicUpdate ();
 
-                nextUpdateTimer += musicSync;
+                player->nextUpdateTimer += player->musicSync;
             }
         }
     }

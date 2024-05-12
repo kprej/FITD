@@ -79,13 +79,7 @@ int main (int argc_, char *argv_[])
 
     PLOGD << initMusicDriver ();
 
-    SDL_IOStream *stream = SDL_IOFromConstMem (player->musicPak.pak (0).raw (),
-                                               player->musicPak.pak (0).data ().size ());
-
-    auto music = Mix_LoadMUS_IO (stream, true);
-
-    Mix_PlayMusic (music, 0);
-    player->PLAYING = true;
+    player->playMusic (6);
 
     ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -120,6 +114,8 @@ int main (int argc_, char *argv_[])
         {
 
             ImGui::Text ("Playing %i\n", player->PLAYING);
+            ImGui::Text ("Music Sync %i\n", player->musicSync);
+            ImGui::Text ("Music Timer %i\n", player->musicTimer);
             ImGui::Text ("FillStatus %i\n", player->fillStatus);
             ImGui::Text ("Len %i\n", player->len);
             ImGui::Text ("Time Before Next Update %i\n", player->timeBeforeNextUpdate);

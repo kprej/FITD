@@ -23,16 +23,14 @@ struct musicPlayer_t
     bool PLAYING;
 
     int timeBeforeNextUpdate;
-    int nextUpdateTimer;
-    int musicTimer;
+    int musicTimer = 0;
     int len;
 
     int fillStatus;
 
-    unsigned int musicChrono;
-    short int currentMusic;
     pakFile_t musicPak;
-    int musicSync;
+    int musicSync = 3000;
+    int nextUpdateTimer = musicSync;
     uint8_t *musicPtr;
 
     void playMusic (int musicNumber);
