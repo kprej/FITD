@@ -7,8 +7,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/quaternion.hpp>
 
-#include <bx/math.h>
-
 #include <imgui.h>
 
 using namespace std;
@@ -74,15 +72,6 @@ glm::mat4 camera_t::projection ()
 void camera_t::drawDebug ()
 {
     float orthoProj[16];
-    bx::mtxOrtho (orthoProj,
-                  m_d->left,
-                  m_d->right,
-                  m_d->top,
-                  m_d->bottom,
-                  m_d->near,
-                  m_d->far,
-                  0.0f,
-                  false);
 
     if (ImGui::Begin ("Camera"))
     {
@@ -127,29 +116,6 @@ void camera_t::drawDebug ()
                         ImGui::TableSetColumnIndex (column);
                         ImGui::Text ("%f", proj[row][column]);
                     }
-                }
-                ImGui::EndTable ();
-            }
-            ImGui::TreePop ();
-        }
-
-        if (ImGui::TreeNode ("Projection Matrix2"))
-        {
-            if (ImGui::BeginTable ("table2", 4))
-            {
-                int index = 0;
-                for (int row = 0; row < 4; row++)
-                {
-                    ImGui::TableNextRow ();
-                    ImGui::TableNextColumn ();
-                    ImGui::Text ("%f", orthoProj[index]);
-                    ImGui::TableNextColumn ();
-                    ImGui::Text ("%f", orthoProj[index + 1]);
-                    ImGui::TableNextColumn ();
-                    ImGui::Text ("%f", orthoProj[index + 2]);
-                    ImGui::TableNextColumn ();
-                    ImGui::Text ("%f", orthoProj[index + 3]);
-                    index += 4;
                 }
                 ImGui::EndTable ();
             }

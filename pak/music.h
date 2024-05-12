@@ -3,11 +3,12 @@
 #include <memory>
 #include <vector>
 
-class sound_t
+
+class music_t
 {
 public:
-    ~sound_t ();
-    sound_t ();
+    ~music_t ();
+    music_t ();
 
     void init (std::vector<std::byte> const &data_);
 

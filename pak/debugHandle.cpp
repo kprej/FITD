@@ -2,11 +2,14 @@
 #include "imgui_impl_bgfx.h"
 #include "osystem.h"
 
+#include "AITD/samples.h"
+
 #include <backends/imgui_impl_sdl3.h>
 #include <bgfx/platform.h>
 
 #include <imgui.h>
 
+#include <magic_enum.hpp>
 #include <plog/Log.h>
 
 #include <array>
@@ -71,6 +74,11 @@ void debugHandle_t::startFrame ()
 
     if (ImGui::BeginMainMenuBar ())
     {
+        if (ImGui::BeginMenu ("Windows"))
+        {
+            showSampleWindow ();
+            ImGui::EndMenu ();
+        }
         ImGui::Text (" %.2f FPS (%.2f ms)",
                      ImGui::GetIO ().Framerate,
                      1000.0f / ImGui::GetIO ().Framerate);
@@ -136,4 +144,35 @@ void debugHandle_t::shutdown ()
     ImGui_Implbgfx_Shutdown ();
 
     ImGui::DestroyContext ();
+}
+
+void debugHandle_t::showSampleWindow ()
+{
+    if (ImGui::Begin ("Samples"))
+    {
+        for (auto i = 0; i < GS ()->samples.size (); ++i)
+        {
+            switch (GS ()->gameId)
+            {
+            case gameId_t::AITD1:
+
+                if (ImGui::Button (magic_enum::enum_name (
+                                       magic_enum::enum_value<atid::samples_t> (i))
+                                       .data ()))
+                    GS ()->samples.at (i).play ();
+                break;
+            };
+        }
+    }
+    ImGui::End ();
+
+    if (ImGui::Begin ("Music"))
+    {
+        for (auto i = 0; i < GS ()->music.size (); ++i)
+        {
+            if (ImGui::Button (to_string (i).c_str ()))
+                GS ()->music.at (i).play ();
+        };
+    }
+    ImGui::End ();
 }

@@ -211,6 +211,11 @@ pakFile_t::pakFile_t (filesystem::path const &file_)
     }
 }
 
+pak_t const &pakFile_t::pak (uint8_t index_) const
+{
+    return m_d->paks.at (index_);
+}
+
 vector<byte> const &pakFile_t::data (uint8_t index_) const
 {
     return m_d->paks.at (index_).data ();

@@ -3,9 +3,13 @@
 #include "camera.h"
 #include "debugHandle.h"
 #include "game.h"
+#include "music.h"
 #include "pakFile.h"
 #include "sound.h"
 #include "types.h"
+
+
+#include <adlmidi.h>
 
 #include <SDL3/SDL.h>
 
@@ -34,6 +38,10 @@ struct gameState_t
 
     uint64_t delta;
 
+    std::unique_ptr<ADL_MIDIPlayer> amDevice;
+    ADLMIDI_AudioFormat audioFormat;
+
+    std::vector<music_t> music;
     std::vector<sound_t> samples;
 };
 
@@ -62,6 +70,8 @@ private:
     bool handleInput ();
     void shutdown ();
     void loadPaks ();
+
+    void setupAudio ();
 
     class private_t;
     std::unique_ptr<private_t> m_d;

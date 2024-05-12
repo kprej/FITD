@@ -285,16 +285,19 @@ void body_t::parseData (vector<byte> const &data_)
 void body_t::rotateX (float x_)
 {
     m_d->rotation.x += x_;
+    m_d->rotation.x = glm::clamp (m_d->rotation.x, 0.f, 360.f);
 }
 
 void body_t::rotateY (float y_)
 {
     m_d->rotation.y += y_;
+    m_d->rotation.y = glm::clamp (m_d->rotation.y, 0.f, 360.f);
 }
 
 void body_t::rotateZ (float z_)
 {
     m_d->rotation.z += z_;
+    m_d->rotation.z = glm::clamp (m_d->rotation.z, 0.f, 360.f);
 }
 
 void body_t::pos (float x_, float y_, float z_)

@@ -25,6 +25,8 @@ protected:
     void shutdown ();
 
 private:
+    void showSampleWindow ();
+
     class private_t;
     std::unique_ptr<private_t> m_d;
 };

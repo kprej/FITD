@@ -10,12 +10,18 @@ FetchContent_MakeAvailable(imgui_git)
 set(SRC ${imgui_git_SOURCE_DIR})
 
 add_library(imgui
-  ${SRC}/imgui.h
+    STATIC
+  ${SRC}/imconfig.h
   ${SRC}/imgui.cpp
-  ${SRC}/imgui_draw.cpp
+  ${SRC}/imgui.h
   ${SRC}/imgui_demo.cpp
+  ${SRC}/imgui_draw.cpp
+  ${SRC}/imgui_internal.h
   ${SRC}/imgui_tables.cpp
   ${SRC}/imgui_widgets.cpp
+  ${SRC}/imstb_rectpack.h
+  ${SRC}/imstb_textedit.h
+  ${SRC}/imstb_truetype.h
 
   ${SRC}/backends/imgui_impl_sdl3.h
   ${SRC}/backends/imgui_impl_sdl3.cpp

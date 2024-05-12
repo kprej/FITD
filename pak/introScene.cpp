@@ -78,12 +78,12 @@ void introScene_t::run ()
         if (IN ()->anyKey || m_d->introTime > 1000)
         {
             m_d->state = DILLO;
+            GS ()->samples.at (6).play ();
             return;
         }
 
         break;
     case DILLO:
-        GS ()->samples.at (0).play ();
         GS ()->handle.drawBody (m_d->tatou);
         m_d->tatou.rotateY (0.2);
         break;

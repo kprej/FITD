@@ -5,6 +5,7 @@
 #include "pakFile.h"
 #include "sound.h"
 
+#include <plog/Helpers/HexDump.h>
 #include <plog/Log.h>
 
 #include <map>
@@ -38,7 +39,15 @@ void aitd_t::_init ()
     {
         sound_t sample;
         sample.init (pak.data ());
+
         GS ()->samples.push_back (sample);
+    }
+    for (auto const &pak : GS ()->paks.at ("LISTMUS").paks ())
+    {
+        music_t music;
+        music.init (pak.data ());
+
+        GS ()->music.push_back (music);
     }
 }
 
