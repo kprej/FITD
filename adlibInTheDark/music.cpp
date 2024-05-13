@@ -746,7 +746,7 @@ int musicPlayer_t::update ()
     return 0;
 }
 
-int musicFade (int cx_, int si_, int dx_)
+int musicPlayer_t::fadeMusic (int cx_, int si_, int dx_)
 {
     int i;
     int bp;
@@ -842,14 +842,14 @@ void musicPlayer_t::playTrack (uint8_t trackNumber_)
     {
         if (trackNumber_ >= 0 && trackNumber_ < musicPak.paks ().size ())
         {
-            musicFade (0, 0, 0x40);
+            fadeMusic (0, 0, 0x40);
 
             musicPtr = musicPak.pak (trackNumber_).raw ();
             remaining = musicPak.pak (trackNumber_).data ().size ();
 
             musicLoad ();
 
-            musicFade (volume, 0, 0x80);
+            fadeMusic (volume, 0, 0x80);
             currentTrack = trackNumber_;
             PLAYING = true;
         }

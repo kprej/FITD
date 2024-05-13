@@ -32,6 +32,8 @@ int main (int argc_, char *argv_[])
                                     1280,
                                     720,
                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    int i, num_devices;
+    SDL_AudioDeviceID *devices = SDL_GetAudioOutputDevices (&num_devices);
 
     if (!window)
     {
@@ -56,32 +58,15 @@ int main (int argc_, char *argv_[])
 
     /* Initialize variables */
     spec.freq = MIX_DEFAULT_FREQUENCY;
-    spec.format = SDL_AUDIO_S32;
+    spec.format = MIX_DEFAULT_FORMAT;
     spec.channels = MIX_DEFAULT_CHANNELS;
 
     /* Open the audio device */
-    auto ret = Mix_OpenAudio (0, &spec);
-    if (ret < 0)
-    {
-        PLOGF << "Couldn't open audio: " << SDL_GetError ();
-        return 1;
-    }
-    else
-    {
-        Mix_QuerySpec (&spec.freq, &spec.format, &spec.channels);
-        PLOGD << "Opened audio at " << spec.freq << " Hz " << (spec.format & 0xFF)
-              << "bit";
-    }
-
     musicPlayer_t *player = new musicPlayer_t ();
-    player->musicPak = pakFile_t (filesystem::path ("LISTMUS.PAK"));
-
-    Mix_HookMusic (musicUpdate, player);
-    Mix_HookMusicFinished (musicEnd);
-
-    player->init ();
 
     ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
+
+    bool init = false;
 
     while (true)
     {
@@ -110,30 +95,68 @@ int main (int argc_, char *argv_[])
             ImGui::EndMainMenuBar ();
         }
 
-        if (ImGui::Begin ("Sound"))
+        if (!init)
         {
-            int i = 0;
-            for (auto const &pak : player->musicPak.paks ())
+            if (ImGui::Begin ("Init"))
             {
-                if (ImGui::Button (("Song " + to_string (i)).c_str ()))
+                int8_t ret = -1;
+                for (i = 0; i < num_devices; ++i)
                 {
-                    player->playTrack (i);
+                    SDL_AudioDeviceID instance_id = devices[i];
+                    string name = SDL_GetAudioDeviceName (instance_id);
+                    if (ImGui::Button (name.c_str ()))
+                        ret = Mix_OpenAudio (instance_id, &spec);
                 }
-                ++i;
+                if (ret != -1)
+                {
+                    Mix_QuerySpec (&spec.freq, &spec.format, &spec.channels);
+                    PLOGD << "Opened audio at " << spec.freq << " Hz "
+                          << (spec.format & 0xFF) << "bit";
+
+                    player->musicPak = pakFile_t (filesystem::path ("LISTMUS.PAK"));
+                    switch (spec.format)
+                    {
+                    case SDL_AUDIO_S16:
+                        player->musicSync = 3000;
+                        break;
+                    case SDL_AUDIO_S32:
+                        player->musicSync = 6000;
+                        break;
+                    };
+
+                    Mix_HookMusic (musicUpdate, player);
+                    Mix_HookMusicFinished (musicEnd);
+
+                    player->init ();
+                    init = true;
+                }
+                ImGui::End ();
             }
+        }
+        else if (init)
+        {
+            if (ImGui::Begin ("Sound"))
+            {
+                int i = 0;
+                for (auto const &pak : player->musicPak.paks ())
+                {
+                    if (ImGui::Button (("Song " + to_string (i)).c_str ()))
+                    {
+                        player->playTrack (i);
+                    }
+                    ++i;
+                }
 
-            int volume = player->volume;
-            ImGui::InputInt ("Volume", &volume, 0, 100);
-            player->volume = volume;
+                int volume = player->volume;
+                ImGui::SliderInt ("Volume", &volume, 0, 124);
+                if (player->volume != volume)
+                {
+                    player->volume = volume;
+                    player->fadeMusic (volume, 0, 0x80);
+                }
 
-            ImGui::Text ("Playing %i\n", player->PLAYING);
-            ImGui::Text ("Remaining %li\n", player->remaining);
-            ImGui::Text ("Music Sync %i\n", player->musicSync);
-            ImGui::Text ("Music Timer %i\n", player->musicTimer);
-            ImGui::Text ("FillStatus %i\n", player->fillStatus);
-            ImGui::Text ("Len %i\n", player->len);
-            ImGui::Text ("Time Before Next Update %i\n", player->timeBeforeNextUpdate);
-            ImGui::End ();
+                ImGui::End ();
+            }
         }
 
         ImGui::Render ();
