@@ -4,22 +4,21 @@
 
 #include <cstdint>
 
-extern bool PLAYING;
-extern int nextMusic;
-extern unsigned int musicChrono;
-extern short int currentMusic;
-extern pakFile_t musicPak;
-extern int musicSync;
-
-int initMusicDriver (void);
-void setFile (pakFile_t const &pak_);
-void musicUpdate (void *udata, uint8_t *stream, int len);
-void callMusicUpdate (void);
-void destroyMusicDriver (void);
-int fadeMusic (int param1, int param2, int param3);
+void musicUpdate (void *userData_, uint8_t *stream_, int len_);
+void musicEnd ();
 
 struct musicPlayer_t
 {
+
+    void callMusicUpdate ();
+    bool init ();
+    void destroyMusicDriver ();
+    int fadeMusic (int param1, int param2, int param3);
+    int update ();
+
+    int musicLoad ();
+    int musicStart ();
+
     bool PLAYING;
 
     int timeBeforeNextUpdate;
@@ -28,10 +27,15 @@ struct musicPlayer_t
 
     int fillStatus;
 
+    uint8_t volume = 100;
+    uint8_t currentTrack;
+
     pakFile_t musicPak;
-    int musicSync = 3000;
+    int musicSync = 9000;
     int nextUpdateTimer = musicSync;
     uint8_t *musicPtr;
+    bool isOPLInit;
+    uint64_t remaining;
 
-    void playMusic (int musicNumber);
+    void playTrack (uint8_t trackNumber_);
 };

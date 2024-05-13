@@ -1,5 +1,6 @@
 #include "music.h"
 
+#include "fmopl.h"
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
@@ -55,7 +56,7 @@ int main (int argc_, char *argv_[])
 
     /* Initialize variables */
     spec.freq = MIX_DEFAULT_FREQUENCY;
-    spec.format = SDL_AUDIO_S16;
+    spec.format = SDL_AUDIO_S32;
     spec.channels = MIX_DEFAULT_CHANNELS;
 
     /* Open the audio device */
@@ -76,10 +77,9 @@ int main (int argc_, char *argv_[])
     player->musicPak = pakFile_t (filesystem::path ("LISTMUS.PAK"));
 
     Mix_HookMusic (musicUpdate, player);
+    Mix_HookMusicFinished (musicEnd);
 
-    PLOGD << initMusicDriver ();
-
-    player->playMusic (6);
+    player->init ();
 
     ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
 
@@ -112,8 +112,22 @@ int main (int argc_, char *argv_[])
 
         if (ImGui::Begin ("Sound"))
         {
+            int i = 0;
+            for (auto const &pak : player->musicPak.paks ())
+            {
+                if (ImGui::Button (("Song " + to_string (i)).c_str ()))
+                {
+                    player->playTrack (i);
+                }
+                ++i;
+            }
+
+            int volume = player->volume;
+            ImGui::InputInt ("Volume", &volume, 0, 100);
+            player->volume = volume;
 
             ImGui::Text ("Playing %i\n", player->PLAYING);
+            ImGui::Text ("Remaining %li\n", player->remaining);
             ImGui::Text ("Music Sync %i\n", player->musicSync);
             ImGui::Text ("Music Timer %i\n", player->musicTimer);
             ImGui::Text ("FillStatus %i\n", player->fillStatus);

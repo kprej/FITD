@@ -6,8 +6,6 @@
 #include <cassert>
 #include <cstdlib>
 
-bool PLAYING = false;
-int musicVolume = 0x7F;
 short int currentMusic = 9999;
 pakFile_t musicPak;
 
@@ -179,11 +177,6 @@ int musicSync = 3000;
 int musicTimer = 0;
 int nextUpdateTimer = musicSync;
 
-void setFile (pakFile_t const &pak_)
-{
-    musicPak = pak_;
-}
-
 void musicUpdate (void *udata, uint8_t *stream, int len)
 {
     musicPlayer_t *player = reinterpret_cast<musicPlayer_t *> (udata);
@@ -192,38 +185,38 @@ void musicUpdate (void *udata, uint8_t *stream, int len)
     {
         player->fillStatus = 0;
         player->len = len;
+
         while (player->fillStatus < player->len)
         {
             player->timeBeforeNextUpdate = player->nextUpdateTimer - player->musicTimer;
-            PLOGD << "Tim " << player->timeBeforeNextUpdate;
-            PLOGD << "Len " << player->len;
-            PLOGD << "TIMER " << player->nextUpdateTimer;
 
             if (player->timeBeforeNextUpdate > (player->len - player->fillStatus))
             {
-                PLOGD << "If one";
                 player->timeBeforeNextUpdate = player->len - player->fillStatus;
             }
 
             if (player->timeBeforeNextUpdate) // generate
             {
-                PLOGD << "Generate Tone " << player->fillStatus;
-                PLOGD << "Length " << (player->timeBeforeNextUpdate) / 2;
                 YM3812UpdateOne (0,
                                  (int16_t *)(stream + player->fillStatus),
                                  (player->timeBeforeNextUpdate) / 2);
                 player->fillStatus += player->timeBeforeNextUpdate;
                 player->musicTimer += player->timeBeforeNextUpdate;
+                player->remaining -= 1;
             }
 
             if (player->musicTimer == player->nextUpdateTimer)
             {
-                callMusicUpdate ();
+                player->update ();
 
                 player->nextUpdateTimer += player->musicSync;
             }
         }
     }
+}
+
+void musicEnd ()
+{
 }
 
 void createDefaultChannel (int index)
@@ -286,7 +279,7 @@ void setupChannelFrequency (int channelIdx, int cl, int dx, int bp)
     sendAdlib (0xB0 + channelIdx, frequencyHigh);
 }
 
-int musicStart (void *dummy)
+int musicPlayer_t::musicStart ()
 {
     int i;
 
@@ -325,12 +318,10 @@ int musicStart (void *dummy)
     return 0;
 }
 
-int musicLoad (void *ptr)
+int musicPlayer_t::musicLoad ()
 {
     int i;
     uint8_t flag1;
-
-    uint8_t *musicPtr = (uint8_t *)ptr;
 
     channelTable = channelTableMelodic;
 
@@ -368,12 +359,12 @@ int musicLoad (void *ptr)
     return 0;
 }
 
-int initialialize (void *dummy)
+bool musicPlayer_t::init ()
 {
     int i;
 
     if (YM3812Init (1, OPL_INTERNAL_FREQ, 44100))
-        return 0;
+        return false;
 
     for (i = 0; i < 11; i++)
     {
@@ -383,16 +374,11 @@ int initialialize (void *dummy)
         createDefaultChannel (i);
     }
 
-    musicStart (NULL);
+    musicStart ();
 
-    OPLinitialized = 1;
+    isOPLInit = true;
 
-    return 1;
-}
-
-int getSignature (void *dummy)
-{
-    return 0;
+    return true;
 }
 
 void commandNop (channelTable2Element *entry, int param, uint8_t *ptr)
@@ -727,7 +713,7 @@ void applyMusicCommandToOPL (channelTable2Element *element2, channelTableElement
     applyDirectFrequency (element2->index, element->var0 & 0xFF, element2->var4, bp);
 }
 
-int update (void *dummy)
+int musicPlayer_t::update ()
 {
     int i;
 
@@ -760,22 +746,15 @@ int update (void *dummy)
     return 0;
 }
 
-int musicFade (void *param)
+int musicFade (int cx_, int si_, int dx_)
 {
     int i;
-    int cx;
-    int si;
-    int dx;
     int bp;
     int di = 1;
 
-    cx = ((int *)param)[0];
-    si = ((int *)param)[1];
-    dx = ((int *)param)[2];
+    bp = si_;
 
-    bp = si;
-
-    si = -1;
+    si_ = -1;
 
     if (!bp)
         bp = 0x7FF;
@@ -786,24 +765,24 @@ int musicFade (void *param)
         {
             if (channelTable2[i].dataPtr)
             {
-                if (dx & 0x100)
+                if (dx_ & 0x100)
                 {
                     exit (1);
                 }
 
-                if (dx & 0x40)
+                if (dx_ & 0x40)
                 {
                     if (!(channelTable2[i].var4 & 0x40))
                         channelTable2[i].var4 |= 0x40;
                 }
 
-                if (dx & 0x80) // start all
+                if (dx_ & 0x80) // start all
                 {
                     channelTable2[i].var4 = 0x40;
-                    cx &= 0x7F;
+                    cx_ &= 0x7F;
 
-                    channelTable2[i].var1D = cx;
-                    channelTable2[i].var1A = cx;
+                    channelTable2[i].var1D = cx_;
+                    channelTable2[i].var1A = cx_;
 
                     channelTable2[i].var1E = 0;
 
@@ -812,41 +791,41 @@ int musicFade (void *param)
                     channelTable2[i].var4 = 2;
                 }
 
-                if (dx & 0x20)
+                if (dx_ & 0x20)
                 {
                     exit (1);
                 }
 
-                if (dx & 0x2000)
+                if (dx_ & 0x2000)
                 {
                     exit (1);
                 }
 
-                if (dx & 0x8000)
+                if (dx_ & 0x8000)
                 {
-                    channelTable2[i].var1A = cx;
+                    channelTable2[i].var1A = cx_;
                 }
 
-                if (dx & 0x1000)
+                if (dx_ & 0x1000)
                 {
                     exit (1);
                 }
 
-                if (dx & 0x10) // still running ?
+                if (dx_ & 0x10) // still running ?
                 {
-                    if (!(dx & 0x2000))
+                    if (!(dx_ & 0x2000))
                     {
                         if (!(channelTable2[i].var4 & 0x40))
                         {
-                            if (si < channelTable2[i].var18)
-                                si = channelTable2[i].var18;
+                            if (si_ < channelTable2[i].var18)
+                                si_ = channelTable2[i].var18;
                         }
                     }
                     else
                     {
-                        if (channelTable2[i].var1D != cx)
+                        if (channelTable2[i].var1D != cx_)
                         {
-                            si = 0;
+                            si_ = 0;
                         }
                     }
                 }
@@ -854,93 +833,30 @@ int musicFade (void *param)
         }
     }
 
-    return si;
+    return si_;
 }
 
-musicDrvFunctionType musicDrvFunc[14] = {
-    update,
-    initialialize,
-    musicStart,
-    musicLoad,
-    NULL,
-    musicFade,
-    NULL,
-    NULL,
-    getSignature,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-    NULL,
-};
-
-int callMusicDrv (int commandArg, void *ptr)
+void musicPlayer_t::playTrack (uint8_t trackNumber_)
 {
-    if (!musicDrvFunc[commandArg])
+    if (currentTrack != trackNumber_)
     {
-        exit (1);
-    }
-
-    return musicDrvFunc[commandArg](ptr);
-}
-
-int initMusicDriver (void)
-{
-    callMusicDrv (1, NULL);
-
-    return callMusicDrv (8, NULL);
-}
-
-void loadMusic (int param, uint8_t *musicPtr)
-{
-    callMusicDrv (3, musicPtr);
-    callMusicDrv (2, NULL);
-}
-
-int fadeParam[3];
-
-int fadeMusic (int param1, int param2, int param3)
-{
-    fadeParam[0] = param1;
-    fadeParam[1] = param2;
-    fadeParam[2] = param3;
-
-    return callMusicDrv (5, &fadeParam);
-}
-
-void musicPlayer_t::playMusic (int musicNumber)
-{
-    if (currentMusic != musicNumber)
-    {
-        currentMusic = musicNumber;
-
-        if (musicNumber >= 0)
+        if (trackNumber_ >= 0 && trackNumber_ < musicPak.paks ().size ())
         {
-            fadeMusic (0, 0, 0x40);
+            musicFade (0, 0, 0x40);
 
-            musicPtr = musicPak.pak (musicNumber).raw ();
+            musicPtr = musicPak.pak (trackNumber_).raw ();
+            remaining = musicPak.pak (trackNumber_).data ().size ();
 
-            loadMusic (0, musicPtr);
+            musicLoad ();
 
-            fadeMusic (musicVolume, 0, 0x80);
+            musicFade (volume, 0, 0x80);
+            currentTrack = trackNumber_;
             PLAYING = true;
         }
     }
 }
 
-int updateLoop = 0;
-
-int oldTimer = 0;
-
-void callMusicUpdate (void)
-{
-    if (OPLinitialized)
-    {
-        callMusicDrv (0, NULL);
-    }
-}
-
-void destroyMusicDriver (void)
+void musicPlayer_t::destroyMusicDriver (void)
 {
     YM3812Shutdown ();
 }
