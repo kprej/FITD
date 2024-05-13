@@ -20,7 +20,6 @@ set(SDL_STATIC TRUE CACHE BOOL "Build a SDL static library (if available)")
 
 set(BGFX_OPENGL_VERSION 46)
 
-FetchContent_Declare(adlibmidi GIT_REPOSITORY https://github.com/Wohlstand/libADLMIDI.git GIT_TAG master)
 FetchContent_Declare(bgfx GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git GIT_TAG master)
 FetchContent_Declare(glm GIT_REPOSITORY https://github.com/g-truc/glm.git GIT_TAG master)
 FetchContent_Declare(iconfontheader GIT_REPOSITORY https://github.com/juliettef/IconFontCppHeaders.git GIT_TAG main)
@@ -35,7 +34,6 @@ FetchContent_Declare(nanosigslot GIT_REPOSITORY https://github.com/NoAvailableAl
   BUILD_COMMAND ""
     )
 
-FetchContent_MakeAvailable(adlibmidi)
 FetchContent_MakeAvailable(bgfx)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(iconfontheader)
@@ -49,6 +47,7 @@ FetchContent_MakeAvailable(SDL_mixer)
 FetchContent_MakeAvailable(zlib)
 
 add_subdirectory(library/pakUtil)
+add_subdirectory(library/sound)
 
 add_subdirectory(adlibInTheDark)
 add_subdirectory(pak)

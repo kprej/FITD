@@ -1,13 +1,9 @@
-#include "music.h"
+#include "musicBackend.h"
 #include "fmopl.h"
-
-#include <plog/Log.h>
 
 #include <cassert>
 #include <cstdlib>
-
-short int currentMusic = 9999;
-pakFile_t musicPak;
+#include <iostream>
 
 unsigned int musicChrono;
 
@@ -17,45 +13,11 @@ struct FM_OPL *virtualOpl;
 
 char OPLinitialized = 0;
 
-#define OPL_INTERNAL_FREQ 3579545
-
 void callMusicUpdate (void);
-
-struct channelTable2Element
-{
-    uint16_t index;
-    struct channelTable2Element *var2;
-    uint16_t var4;
-    uint8_t *dataPtr;
-    uint8_t *commandPtr;
-    int16_t varE;
-    uint16_t var10;
-    uint8_t var12;
-    uint16_t var13;
-    uint16_t var15;
-    uint8_t var17;
-    uint16_t var18;
-    uint8_t var1A;
-    uint8_t var1B;
-    uint8_t var1C;
-    uint8_t var1D;
-    uint8_t var1E;
-};
 
 typedef struct channelTable2Element channelTable2Element;
 
 typedef void (*musicCommandType) (channelTable2Element *entry, int param, uint8_t *ptr);
-
-struct channelTableElement
-{
-    uint16_t var0;
-    uint16_t var2;
-    uint8_t var4;
-    uint8_t var5;
-    uint8_t var6;
-    uint8_t var7;
-    uint16_t var8;
-};
 
 typedef struct channelTableElement channelTableElement;
 
@@ -71,9 +33,6 @@ channelTableElement channelDataTable[11] = {
     {0xFFFF, 0x40, 0xFF, 0xFF, 0xFF, 0x9C, 0xFFFF},
     {0xFFFF, 0x40, 0xFF, 0xFF, 0xFF, 0x9C, 0xFFFF},
     {0xFFFF, 0x40, 0xFF, 0xFF, 0xFF, 0x9C, 0xFFFF}};
-
-extern channelTable2Element channelTable3[11];
-extern channelTable2Element channelTable2[11];
 
 // clang-format off
 channelTable2Element channelTable3[11] = {
@@ -162,6 +121,7 @@ uint16_t *globTable[13] = {
 
 unsigned char musicParam1 = 0;
 
+uint8_t *musicPtr;
 uint8_t *currentMusicPtr = NULL;
 uint8_t *currentMusicPtr2 = NULL;
 uint8_t *currentMusicPtr3 = NULL;
@@ -176,48 +136,6 @@ void sendAdlib (int regIdx, int value)
 int musicSync = 3000;
 int musicTimer = 0;
 int nextUpdateTimer = musicSync;
-
-void musicUpdate (void *udata, uint8_t *stream, int len)
-{
-    musicPlayer_t *player = reinterpret_cast<musicPlayer_t *> (udata);
-
-    if (player->PLAYING)
-    {
-        player->fillStatus = 0;
-        player->len = len;
-
-        while (player->fillStatus < player->len)
-        {
-            player->timeBeforeNextUpdate = player->nextUpdateTimer - player->musicTimer;
-
-            if (player->timeBeforeNextUpdate > (player->len - player->fillStatus))
-            {
-                player->timeBeforeNextUpdate = player->len - player->fillStatus;
-            }
-
-            if (player->timeBeforeNextUpdate) // generate
-            {
-                YM3812UpdateOne (0,
-                                 (int16_t *)(stream + player->fillStatus),
-                                 (player->timeBeforeNextUpdate) / 2);
-                player->fillStatus += player->timeBeforeNextUpdate;
-                player->musicTimer += player->timeBeforeNextUpdate;
-                player->remaining -= 1;
-            }
-
-            if (player->musicTimer == player->nextUpdateTimer)
-            {
-                player->update ();
-
-                player->nextUpdateTimer += player->musicSync;
-            }
-        }
-    }
-}
-
-void musicEnd ()
-{
-}
 
 void createDefaultChannel (int index)
 {
@@ -277,108 +195,6 @@ void setupChannelFrequency (int channelIdx, int cl, int dx, int bp)
     }
 
     sendAdlib (0xB0 + channelIdx, frequencyHigh);
-}
-
-int musicPlayer_t::musicStart ()
-{
-    int i;
-
-    sendAdlib (1, 0x20);
-    sendAdlib (8, 0);
-    sendAdlib (0xBD, regBDConf);
-
-    for (i = 0; i < 18; i++)
-    {
-        sendAdlib (0x60 + channelTableMelodic[i], 0xFF);
-        sendAdlib (0x80 + channelTableMelodic[i], 0xFF);
-    }
-
-    for (i = 0; i < 9; i++)
-    {
-        resetChannelFrequency (i);
-    }
-
-    for (i = 0; i < 11; i++)
-    {
-        createDefaultChannel (i);
-    }
-
-    if (!musicParam1)
-    {
-        resetChannelFrequency (6);
-        setupChannelFrequency (6, 0, 0x40, 0);
-
-        resetChannelFrequency (7);
-        setupChannelFrequency (7, 7, 0x40, 0);
-
-        resetChannelFrequency (8);
-        setupChannelFrequency (8, 0, 0x40, 0);
-    }
-
-    return 0;
-}
-
-int musicPlayer_t::musicLoad ()
-{
-    int i;
-    uint8_t flag1;
-
-    channelTable = channelTableMelodic;
-
-    flag1 = musicPtr[0x3C] & 0xC0;
-    musicParam1 = musicPtr[0x3D];
-
-    if (!musicParam1)
-    {
-        flag1 |= 0x20;
-        channelTable = channelTableRythme;
-    }
-
-    regBDConf = flag1;
-
-    for (i = 0; i < 11; i++)
-    {
-        unsigned long int offset;
-
-        offset = *((uint32_t *)(musicPtr + i * 4 + 8));
-
-        if (offset)
-        {
-            channelTable2[i].dataPtr = musicPtr + offset;
-        }
-        else
-        {
-            channelTable2[i].dataPtr = NULL;
-        }
-
-        channelTable2[i].var4 |= 0x40;
-    }
-
-    currentMusicPtr = musicPtr + *((uint16_t *)(musicPtr + 0x34));
-
-    return 0;
-}
-
-bool musicPlayer_t::init ()
-{
-    int i;
-
-    if (YM3812Init (1, OPL_INTERNAL_FREQ, 44100))
-        return false;
-
-    for (i = 0; i < 11; i++)
-    {
-        channelTable2[i].var4 |= 0x20;
-        channelTable2[i].var2->var4 |= 0x20;
-
-        createDefaultChannel (i);
-    }
-
-    musicStart ();
-
-    isOPLInit = true;
-
-    return true;
 }
 
 void commandNop (channelTable2Element *entry, int param, uint8_t *ptr)
@@ -454,12 +270,12 @@ musicCommandType musicCommandTable[10] = {
     commandNop,
 };
 
-void executeMusicCommand (channelTable2Element *entry)
+int executeMusicCommand (channelTable2Element *entry)
 {
     uint16_t opcode;
 
     if (entry->var4 & 0x40)
-        return;
+        return 0;
 
     if (entry->var4 & 0x02) // start channel
     {
@@ -469,7 +285,7 @@ void executeMusicCommand (channelTable2Element *entry)
     }
     else
     {
-        if (entry->var1A != entry->var1D)
+        if (entry->gain != entry->var1D)
         {
             exit (1);
         }
@@ -482,7 +298,7 @@ void executeMusicCommand (channelTable2Element *entry)
         }
         else
         {
-            return;
+            return 1;
         }
     }
 
@@ -496,6 +312,8 @@ void executeMusicCommand (channelTable2Element *entry)
 
         musicCommandTable[opcode & 0x7F](entry, opcode >> 8, entry->commandPtr);
     } while (!(opcode & 0x80));
+
+    return 1;
 }
 
 uint8_t smallTable[] = {0x10, 8, 4, 2, 1};
@@ -713,40 +531,88 @@ void applyMusicCommandToOPL (channelTable2Element *element2, channelTableElement
     applyDirectFrequency (element2->index, element->var0 & 0xFF, element2->var4, bp);
 }
 
-int musicPlayer_t::update ()
+int musicStart ()
 {
     int i;
 
-    channelTable2Element *si;
+    sendAdlib (1, 0x20);
+    sendAdlib (8, 0);
+    sendAdlib (0xBD, regBDConf);
 
-    if (generalVolume & 0xFF)
+    for (i = 0; i < 18; i++)
     {
-        return 0;
+        sendAdlib (0x60 + channelTableMelodic[i], 0xFF);
+        sendAdlib (0x80 + channelTableMelodic[i], 0xFF);
+    }
+
+    for (i = 0; i < 9; i++)
+    {
+        resetChannelFrequency (i);
     }
 
     for (i = 0; i < 11; i++)
     {
-        currentMusicPtr2 = currentMusicPtr;
+        createDefaultChannel (i);
+    }
 
-        executeMusicCommand (&channelTable2[i]);
+    if (!musicParam1)
+    {
+        resetChannelFrequency (6);
+        setupChannelFrequency (6, 0, 0x40, 0);
 
-        si = &channelTable2[i];
+        resetChannelFrequency (7);
+        setupChannelFrequency (7, 7, 0x40, 0);
 
-        if (channelTable2[i].var4 & 4)
-        {
-            currentMusicPtr2 = currentMusicPtr3;
-
-            si = channelTable2[i].var2;
-            executeMusicCommand (channelTable2[i].var2);
-        }
-
-        applyMusicCommandToOPL (si, &channelDataTable[i]);
+        resetChannelFrequency (8);
+        setupChannelFrequency (8, 0, 0x40, 0);
     }
 
     return 0;
 }
+int musicLoad (uint8_t *musicPtr_)
+{
+    int i;
+    uint8_t flag1;
 
-int musicPlayer_t::fadeMusic (int cx_, int si_, int dx_)
+    musicPtr = musicPtr_;
+
+    channelTable = channelTableMelodic;
+
+    flag1 = musicPtr[0x3C] & 0xC0;
+    musicParam1 = musicPtr[0x3D];
+
+    if (!musicParam1)
+    {
+        flag1 |= 0x20;
+        channelTable = channelTableRythme;
+    }
+
+    regBDConf = flag1;
+
+    for (i = 0; i < 11; i++)
+    {
+        unsigned long int offset;
+
+        offset = *((uint32_t *)(musicPtr + i * 4 + 8));
+
+        if (offset)
+        {
+            channelTable2[i].dataPtr = musicPtr + offset;
+        }
+        else
+        {
+            channelTable2[i].dataPtr = NULL;
+        }
+
+        channelTable2[i].var4 |= 0x40;
+    }
+
+    currentMusicPtr = musicPtr + *((uint16_t *)(musicPtr + 0x34));
+
+    return 0;
+}
+
+int fadeMusic (int cx_, int si_, int dx_)
 {
     int i;
     int bp;
@@ -770,19 +636,21 @@ int musicPlayer_t::fadeMusic (int cx_, int si_, int dx_)
                     exit (1);
                 }
 
+                // STOP
                 if (dx_ & 0x40)
                 {
                     if (!(channelTable2[i].var4 & 0x40))
                         channelTable2[i].var4 |= 0x40;
                 }
 
+                // RESTART
                 if (dx_ & 0x80) // start all
                 {
                     channelTable2[i].var4 = 0x40;
                     cx_ &= 0x7F;
 
                     channelTable2[i].var1D = cx_;
-                    channelTable2[i].var1A = cx_;
+                    channelTable2[i].gain = cx_;
 
                     channelTable2[i].var1E = 0;
 
@@ -801,9 +669,12 @@ int musicPlayer_t::fadeMusic (int cx_, int si_, int dx_)
                     exit (1);
                 }
 
+                // VOLUME
                 if (dx_ & 0x8000)
                 {
-                    channelTable2[i].var1A = cx_;
+                    cx_ &= 0x7F;
+                    channelTable2[i].gain = cx_;
+                    channelTable2[i].var1D = cx_;
                 }
 
                 if (dx_ & 0x1000)
@@ -836,27 +707,35 @@ int musicPlayer_t::fadeMusic (int cx_, int si_, int dx_)
     return si_;
 }
 
-void musicPlayer_t::playTrack (uint8_t trackNumber_)
+int update ()
 {
-    if (currentTrack != trackNumber_)
+    int i;
+
+    channelTable2Element *si;
+
+    if (generalVolume & 0xFF)
     {
-        if (trackNumber_ >= 0 && trackNumber_ < musicPak.paks ().size ())
-        {
-            fadeMusic (0, 0, 0x40);
-
-            musicPtr = musicPak.pak (trackNumber_).raw ();
-            remaining = musicPak.pak (trackNumber_).data ().size ();
-
-            musicLoad ();
-
-            fadeMusic (volume, 0, 0x80);
-            currentTrack = trackNumber_;
-            PLAYING = true;
-        }
+        return 0;
     }
-}
 
-void musicPlayer_t::destroyMusicDriver (void)
-{
-    YM3812Shutdown ();
+    for (i = 0; i < 11; i++)
+    {
+        currentMusicPtr2 = currentMusicPtr;
+
+        if (!executeMusicCommand (&channelTable2[i]))
+
+            si = &channelTable2[i];
+
+        if (channelTable2[i].var4 & 4)
+        {
+            currentMusicPtr2 = currentMusicPtr3;
+
+            si = channelTable2[i].var2;
+            executeMusicCommand (channelTable2[i].var2);
+        }
+
+        applyMusicCommandToOPL (si, &channelDataTable[i]);
+    }
+
+    return 0;
 }

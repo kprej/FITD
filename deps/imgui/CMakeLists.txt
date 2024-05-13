@@ -23,10 +23,10 @@ add_library(imgui
   ${SRC}/imstb_textedit.h
   ${SRC}/imstb_truetype.h
 
-  ${SRC}/backends/imgui_impl_sdl3.h
-  ${SRC}/backends/imgui_impl_sdl3.cpp
-  ${SRC}/backends/imgui_impl_sdlrenderer3.h
-  ${SRC}/backends/imgui_impl_sdlrenderer3.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_sdl3.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_sdl3.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/backends/imgui_impl_sdlrenderer3.cpp
 )
 
 target_link_libraries(imgui PUBLIC SDL3::SDL3)
@@ -34,5 +34,5 @@ target_link_libraries(imgui PUBLIC SDL3::SDL3)
 target_include_directories(imgui
 PUBLIC
   ${SRC}
-  ${SRC}/backends
+  ${CMAKE_CURRENT_SOURCE_DIR}/backends
 )

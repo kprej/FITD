@@ -195,6 +195,8 @@ pakFile_t::pakFile_t (filesystem::path const &file_)
     iFile.read (reinterpret_cast<char *> (&fileOffset), 4);
     uint32_t iFileCount = (fileOffset / 4) - 2;
 
+    iFileCount += 1;
+
     PLOGV << "File Count: " << to_string (iFileCount);
 
     m_d->paks.resize (iFileCount);
@@ -221,6 +223,8 @@ pakFile_t::pakFile_t (filesystem::path const &file_)
 
         ++index;
     }
+
+    PLOGV << m_d->paks.size ();
 }
 
 pak_t const &pakFile_t::pak (uint8_t index_) const

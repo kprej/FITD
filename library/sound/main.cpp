@@ -1,5 +1,6 @@
 #include "musicPlayer.h"
 
+#include "fmopl.h"
 #include <imgui.h>
 #include <imgui_impl_sdl3.h>
 #include <imgui_impl_sdlrenderer3.h>
@@ -60,6 +61,9 @@ int main (int argc_, char *argv_[])
     spec.format = MIX_DEFAULT_FORMAT;
     spec.channels = MIX_DEFAULT_CHANNELS;
 
+    /* Open the audio device */
+    musicPlayer_t *player = new musicPlayer_t ();
+
     ImVec4 clear_color = ImVec4 (0.45f, 0.55f, 0.60f, 1.00f);
 
     bool init = false;
@@ -109,27 +113,26 @@ int main (int argc_, char *argv_[])
                     PLOGD << "Opened audio at " << spec.freq << " Hz "
                           << (spec.format & 0xFF) << "bit";
 
-                    musicPlayer_t::PTR ()->setMusicPak (
-                        pakFile_t (filesystem::path ("LISTMUS.PAK")));
+                    player->setMusicPak (pakFile_t (filesystem::path ("LISTMUS.PAK")));
                     switch (spec.format)
                     {
                     case SDL_AUDIO_S16:
-                        musicPlayer_t::PTR ()->setSpeed (3000);
+                        player->setSpeed (3000);
                         break;
                     case SDL_AUDIO_S32:
-                        musicPlayer_t::PTR ()->setSpeed (6000);
+                        player->setSpeed (6000);
                         break;
                     };
 
-                    musicPlayer_t::PTR ()->init ();
+                    player->init ();
                     init = true;
                 }
                 ImGui::End ();
             }
         }
-        else if (musicPlayer_t::PTR ()->isInit ())
+        else if (init)
         {
-            musicPlayer_t::PTR ()->debug ();
+            player->debug ();
         }
 
         ImGui::Render ();
