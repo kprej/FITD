@@ -39,7 +39,7 @@ public:
 void musicUpdate (void *udata, uint8_t *stream, int len)
 {
     auto player = musicPlayer_t::PTR ();
-    if (true)
+    if (player->m_d->state == musicPlayer_t::PLAYING)
     {
         player->m_d->fillStatus = 0;
         player->m_d->len = len;

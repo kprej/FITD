@@ -18,6 +18,13 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(SDL_SHARED TRUE CACHE BOOL "Build a SDL shared library (if available)")
 set(SDL_STATIC TRUE CACHE BOOL "Build a SDL static library (if available)")
 
+#SLD audio bug
+IF(LINUX)
+add_definitions(-DAUDIO_DRIVER="alsa")
+ELSEIF(WIN32)
+add_definitions(-DAUDIO_DRIVER="dsound")
+ENDIF()
+
 set(BGFX_OPENGL_VERSION 46)
 
 FetchContent_Declare(bgfx GIT_REPOSITORY https://github.com/bkaradzic/bgfx.cmake.git GIT_TAG master)

@@ -21,6 +21,8 @@ int main (int argc_, char *argv_[])
     plog::init (plog::debug, &consoleAppender);
     filesystem::current_path (filesystem::path (argv_[0]).parent_path ());
 
+    SDL_setenv ("SDL_AUDIO_DRIVER", AUDIO_DRIVER, 1);
+
     if (SDL_Init (SDL_INIT_VIDEO | SDL_INIT_AUDIO) != 0)
     {
         PLOGF << SDL_GetError ();
@@ -40,7 +42,7 @@ int main (int argc_, char *argv_[])
         return 1;
     }
 
-    auto renderer = SDL_CreateRenderer (window, NULL, 0);
+    auto renderer = SDL_CreateRenderer (window, nullptr);
     if (!renderer)
         return 1;
 
