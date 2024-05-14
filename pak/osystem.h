@@ -3,13 +3,11 @@
 #include "camera.h"
 #include "debugHandle.h"
 #include "game.h"
-#include "music.h"
 #include "pakFile.h"
 #include "sound.h"
 #include "types.h"
 
-
-#include <adlmidi.h>
+#include "musicPlayer.h"
 
 #include <SDL3/SDL.h>
 
@@ -38,10 +36,6 @@ struct gameState_t
 
     uint64_t delta;
 
-    std::unique_ptr<ADL_MIDIPlayer> amDevice;
-    ADLMIDI_AudioFormat audioFormat;
-
-    std::vector<music_t> music;
     std::vector<sound_t> samples;
 };
 
@@ -85,4 +79,9 @@ inline std::shared_ptr<gameState_t> GS ()
 inline std::shared_ptr<input_t> IN ()
 {
     return osystem_t::IN ();
+}
+
+inline std::shared_ptr<musicPlayer_t> MP ()
+{
+    return musicPlayer_t::PTR ();
 }

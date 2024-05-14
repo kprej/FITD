@@ -2,6 +2,8 @@
 
 #include "pakFile.h"
 
+namespace aitd
+{
 enum ress_t
 {
     TATOU_3DO = 0,
@@ -29,3 +31,4 @@ enum ress_t
 extern pakType_t toType (ress_t ress_)
 {
 }
+} // namespace aitd

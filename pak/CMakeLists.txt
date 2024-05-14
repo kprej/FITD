@@ -13,6 +13,8 @@ set(SHADERS
 
 set(AITD1
     AITD/ITD_RESS.h
+    AITD/LISTMUS.h
+    AITD/LISTMUS.cpp
     AITD/AITD.cpp
     AITD/AITD.h
     AITD/samples.h
@@ -37,21 +39,15 @@ add_executable (pak
     introScene.cpp
     introScene.h
     main.cpp
-    music.cpp
-    music.h
     osystem.cpp
     osystem.h
-    pakFile.cpp
-    pakFile.h
     sound.cpp
     sound.h
     types.cpp
     types.h
-    unpack.cpp
-    unpack.h
     ${AITD1}
     ${SHADERS}
     )
 
 target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD ${nanosigslot_SOURCE_DIR})
-target_link_libraries(pak ADLMIDI bgfx bx glm imgui magic_enum plog SDL3::SDL3 SDL3_mixer::SDL3_mixer zlib)
+target_link_libraries(pak bgfx bx glm imgui magic_enum plog SDL3::SDL3 SDL3_mixer::SDL3_mixer sound zlib)

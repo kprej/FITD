@@ -15,25 +15,43 @@ class musicPlayer_t::private_t
 {
 public:
     ~private_t () = default;
-    private_t () = default;
+    private_t ()
+        : state (STOPPED)
+        , timeBeforeNextUpdate (0)
+        , musicTimer (0)
+        , len (0)
+        , fillStatus (0)
+        , volume (124)
+        , currentTrack (255)
+        , loops (0)
+        , musicPak ()
+        , musicSync (3000)
+        , nextUpdateTimer (musicSync)
+        , isOPLInit (false)
+        , remaining (0)
+        , trackNames ()
+    {
+    }
 
     state_t state;
 
     int timeBeforeNextUpdate;
-    int musicTimer = 0;
+    int musicTimer;
     int len;
 
     int fillStatus;
 
-    uint8_t volume = 100;
-    uint8_t currentTrack = 255;
-    int loops = 0;
+    uint8_t volume;
+    uint8_t currentTrack;
+    int loops;
 
     pakFile_t musicPak;
-    int musicSync = 9000;
-    int nextUpdateTimer = musicSync;
+    int musicSync;
+    int nextUpdateTimer;
     bool isOPLInit;
     uint64_t remaining;
+
+    vector<string> trackNames;
 };
 
 void musicUpdate (void *udata, uint8_t *stream, int len)
@@ -156,6 +174,12 @@ void musicPlayer_t::setMusicPak (pakFile_t const &file_)
 void musicPlayer_t::setSpeed (uint16_t speed_)
 {
     m_d->musicSync = speed_;
+    m_d->nextUpdateTimer = speed_;
+}
+
+void musicPlayer_t::setTrackNames (vector<string> const &names_)
+{
+    m_d->trackNames = names_;
 }
 
 void musicPlayer_t::shutdown ()
@@ -187,14 +211,25 @@ void musicPlayer_t::debug ()
 {
     string extra = "";
     if (m_d->state != STOPPED)
-        extra = " : Now Playing Track " + to_string (m_d->currentTrack);
+    {
+        if (m_d->trackNames.empty ())
+            extra = " : Now Playing Track " + to_string (m_d->currentTrack);
+        else
+            extra = " : Now Playing Track " + m_d->trackNames.at (m_d->currentTrack);
+    }
 
     if (ImGui::Begin (("Music" + extra).c_str ()))
     {
         int i = 0;
         for (auto const &pak : m_d->musicPak.paks ())
         {
-            if (ImGui::Button (("Track " + std::to_string (i)).c_str ()))
+            bool pressed;
+            if (m_d->trackNames.empty ())
+                pressed = ImGui::Button (("Track " + std::to_string (i)).c_str ());
+            else
+                pressed = ImGui::Button (m_d->trackNames.at (i).c_str ());
+
+            if (pressed)
                 playTrack (i);
 
             if (i % 2 == 0)

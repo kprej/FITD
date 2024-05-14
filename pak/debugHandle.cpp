@@ -165,14 +165,4 @@ void debugHandle_t::showSampleWindow ()
         }
     }
     ImGui::End ();
-
-    if (ImGui::Begin ("Music"))
-    {
-        for (auto i = 0; i < GS ()->music.size (); ++i)
-        {
-            if (ImGui::Button (to_string (i).c_str ()))
-                GS ()->music.at (i).play ();
-        };
-    }
-    ImGui::End ();
 }

@@ -19,24 +19,6 @@ using namespace std;
 
 #define printVersion() PLOGD << "Compiled the " << __DATE__ << " at " << __TIME__;
 
-namespace
-{
-void audioCallback (void *player_, uint8_t *stream_, int len_)
-{
-    struct ADL_MIDIPlayer *p = (struct ADL_MIDIPlayer *)player_;
-
-    /* Convert bytes length into total count of samples in all channels */
-    int samples_count = len_ / GS ()->audioFormat.containerSize;
-
-    /* Take some samples from the ADLMIDI */
-    samples_count = adl_playFormat (p,
-                                    samples_count,
-                                    stream_,
-                                    stream_ + GS ()->audioFormat.containerSize,
-                                    &GS ()->audioFormat);
-}
-} // namespace
-
 class osystem_t::private_t
 {
 public:
@@ -91,6 +73,7 @@ void osystem_t::init (int argc_, char *argv_[])
     plog::init (plog::debug, &consoleAppender);
 
     filesystem::current_path (filesystem::path (argv_[0]).parent_path ());
+    SDL_setenv ("SDL_AUDIO_DRIVER", AUDIO_DRIVER, 1);
 
     printVersion ();
 
@@ -272,43 +255,4 @@ void osystem_t::setupAudio ()
                  : (spec.channels > 1) ? "stereo"
                                        : "mono");
     }
-
-    GS ()->amDevice.reset (adl_init (spec.freq));
-    adl_switchEmulator (GS ()->amDevice.get (), ADLMIDI_EMU_NUKED);
-
-    Mix_HookMusic (audioCallback, GS ()->amDevice.get ());
-
-    uint16_t obtained_format;
-    Mix_QuerySpec (NULL, &obtained_format, NULL);
-
-    switch (obtained_format)
-    {
-    case SDL_AUDIO_S8:
-        GS ()->audioFormat.type = ADLMIDI_SampleType_S8;
-        GS ()->audioFormat.containerSize = sizeof (int8_t);
-        GS ()->audioFormat.sampleOffset = sizeof (int8_t) * 2;
-        break;
-    case SDL_AUDIO_U8:
-        GS ()->audioFormat.type = ADLMIDI_SampleType_U8;
-        GS ()->audioFormat.containerSize = sizeof (uint8_t);
-        GS ()->audioFormat.sampleOffset = sizeof (uint8_t) * 2;
-        break;
-    case SDL_AUDIO_S16:
-        GS ()->audioFormat.type = ADLMIDI_SampleType_S16;
-        GS ()->audioFormat.containerSize = sizeof (int16_t);
-        GS ()->audioFormat.sampleOffset = sizeof (int16_t) * 2;
-        break;
-    case SDL_AUDIO_S32:
-        GS ()->audioFormat.type = ADLMIDI_SampleType_S32;
-        GS ()->audioFormat.containerSize = sizeof (int32_t);
-        GS ()->audioFormat.sampleOffset = sizeof (int32_t) * 2;
-        break;
-    case SDL_AUDIO_F32:
-        GS ()->audioFormat.type = ADLMIDI_SampleType_F32;
-        GS ()->audioFormat.containerSize = sizeof (float);
-        GS ()->audioFormat.sampleOffset = sizeof (float) * 2;
-        break;
-    }
-
-    adl_setNumChips (GS ()->amDevice.get (), 1);
 }

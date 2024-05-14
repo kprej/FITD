@@ -1,4 +1,6 @@
 #include "AITD/AITD.h"
+#include "AITD/LISTMUS.h"
+
 #include "body.h"
 #include "introScene.h"
 #include "osystem.h"
@@ -42,13 +44,9 @@ void aitd_t::_init ()
 
         GS ()->samples.push_back (sample);
     }
-    for (auto const &pak : GS ()->paks.at ("LISTMUS").paks ())
-    {
-        music_t music;
-        music.init (pak.data ());
 
-        GS ()->music.push_back (music);
-    }
+    MP ()->setMusicPak (GS ()->paks.at ("LISTMUS"));
+    MP ()->setTrackNames (aitd::TRACK_NAMES);
 }
 
 void aitd_t::_start ()

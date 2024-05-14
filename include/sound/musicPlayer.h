@@ -3,7 +3,9 @@
 #include "pakFile.h"
 
 #include <cstdint>
+#include <list>
 #include <memory>
+#include <string>
 
 extern void musicEnd ();
 
@@ -25,6 +27,7 @@ public:
 
     void setMusicPak (pakFile_t const &file_);
     void setSpeed (uint16_t speed_);
+    void setTrackNames (std::vector<std::string> const &names_);
 
     void playTrack (uint8_t trackNumber_);
     void setLoops (int8_t loops_);
