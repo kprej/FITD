@@ -73,7 +73,7 @@ body_t::body_t ()
 
 void body_t::parseData (vector<byte> const &data_)
 {
-    buffer_t bodyBuffer (data_, data_.size ());
+    buffer_t bodyBuffer (data_);
 
     m_d->flags = bodyBuffer.get<uint16_t> ();
 

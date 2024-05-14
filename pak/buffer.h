@@ -6,18 +6,18 @@
 class buf_t : public std::basic_streambuf<char>
 {
 public:
-    buf_t (std::vector<std::byte> const &p_, size_t size_)
+    buf_t (std::vector<std::byte> const &p_)
     {
-        setg ((char *)p_.data (), (char *)p_.data (), (char *)p_.data () + size_);
+        setg ((char *)p_.data (), (char *)p_.data (), (char *)p_.data () + p_.size ());
     }
 };
 
 class buffer_t : public std::istream
 {
 public:
-    buffer_t (std::vector<std::byte> const &data_, size_t size_)
+    buffer_t (std::vector<std::byte> const &data_)
         : std::istream (&m_d)
-        , m_d (data_, size_)
+        , m_d (data_)
     {
         rdbuf (&m_d);
     }

@@ -32,6 +32,8 @@ add_executable (pak
     camera.h
     debugHandle.cpp
     debugHandle.h
+    font.cpp
+    font.h
     game.cpp
     game.h
     imgui_impl_bgfx.cpp
