@@ -5,6 +5,8 @@
 #include <cstdint>
 #include <memory>
 
+extern void musicEnd ();
+
 class musicPlayer_t
 {
 public:
@@ -25,6 +27,7 @@ public:
     void setSpeed (uint16_t speed_);
 
     void playTrack (uint8_t trackNumber_);
+    void setLoops (int8_t loops_);
 
     void shutdown ();
 

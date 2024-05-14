@@ -28,8 +28,8 @@ int main (int argc_, char *argv_[])
 
     SDL_SetHint (SDL_HINT_IME_SHOW_UI, "1");
     auto window = SDL_CreateWindow ("ADLIB In The DARK",
-                                    1280,
-                                    720,
+                                    300,
+                                    300,
                                     SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY);
     int i, num_devices;
     SDL_AudioDeviceID *devices = SDL_GetAudioOutputDevices (&num_devices);
@@ -124,11 +124,14 @@ int main (int argc_, char *argv_[])
                     musicPlayer_t::PTR ()->init ();
                     init = true;
                 }
-                ImGui::End ();
             }
+            ImGui::End ();
         }
         else if (musicPlayer_t::PTR ()->isInit ())
         {
+            const ImGuiViewport *viewport = ImGui::GetMainViewport ();
+            ImGui::SetNextWindowPos (true ? viewport->WorkPos : viewport->Pos);
+            ImGui::SetNextWindowSize (true ? viewport->WorkSize : viewport->Size);
             musicPlayer_t::PTR ()->debug ();
         }
 

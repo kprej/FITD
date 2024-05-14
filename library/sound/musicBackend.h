@@ -39,6 +39,7 @@ extern channelTable2Element channelTable2[11];
 extern unsigned char channelTableMelodic[];
 extern unsigned char channelTableRythme[];
 extern unsigned char *channelTable;
+extern uint8_t ACTIVE_CHANNELS;
 
 extern unsigned char regBDConf;
 

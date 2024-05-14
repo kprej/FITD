@@ -27,6 +27,7 @@ public:
 
     uint8_t volume = 100;
     uint8_t currentTrack = 255;
+    int loops = 0;
 
     pakFile_t musicPak;
     int musicSync = 9000;
@@ -78,7 +79,26 @@ void musicUpdate (void *udata, uint8_t *stream, int len)
 void musicEnd ()
 {
     auto player = musicPlayer_t::PTR ();
-    player->m_d->state = musicPlayer_t::STOPPED;
+    if (player->m_d->state == musicPlayer_t::STOPPED)
+        return;
+
+    if (player->m_d->loops == 0)
+    {
+        player->m_d->state = musicPlayer_t::STOPPED;
+        return;
+    }
+
+    if (player->m_d->loops == -1)
+    {
+        player->m_d->state = musicPlayer_t::PLAYING;
+        fadeMusic (player->m_d->volume, 0, 0x80);
+        return;
+    }
+
+    player->m_d->state = musicPlayer_t::PLAYING;
+    fadeMusic (player->m_d->volume, 0, 0x80);
+
+    --player->m_d->loops;
 }
 
 shared_ptr<musicPlayer_t> musicPlayer_t::PTR ()
@@ -183,6 +203,14 @@ void musicPlayer_t::debug ()
             ++i;
         }
 
+        int inputLoops = m_d->loops;
+        ImGui::InputInt ("Loops", &inputLoops, -1, 100);
+        if (m_d->loops != inputLoops)
+        {
+            m_d->loops = inputLoops;
+        }
+        ImGui::Text ("Active Channels: %i", ACTIVE_CHANNELS);
+
         float inputVolume = float (m_d->volume) / 124;
 
         ImGui::SliderFloat ("Volume", &inputVolume, 0.f, 1.f);
@@ -205,7 +233,6 @@ void musicPlayer_t::debug ()
             m_d->state = STOPPED;
             fadeMusic (0, 0, 0x40);
         }
-
-        ImGui::End ();
     }
+    ImGui::End ();
 }

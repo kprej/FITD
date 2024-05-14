@@ -1,5 +1,6 @@
 #include "musicBackend.h"
 #include "fmopl.h"
+#include "musicPlayer.h"
 
 #include <cassert>
 #include <cstdlib>
@@ -20,6 +21,8 @@ typedef struct channelTable2Element channelTable2Element;
 typedef void (*musicCommandType) (channelTable2Element *entry, int param, uint8_t *ptr);
 
 typedef struct channelTableElement channelTableElement;
+
+uint8_t ACTIVE_CHANNELS = 0;
 
 channelTableElement channelDataTable[11] = {
     {0xFFFF, 0x40, 0xFF, 0xFF, 0xFF, 0x9C, 0xFFFF},
@@ -212,6 +215,8 @@ void command0 (channelTable2Element *entry, int param, uint8_t *ptr)
 
     entry->var4 |= 0x40;
 
+    --ACTIVE_CHANNELS;
+
     if (!(entry->var4 & 0x8000))
     {
         return;
@@ -275,10 +280,13 @@ int executeMusicCommand (channelTable2Element *entry)
     uint16_t opcode;
 
     if (entry->var4 & 0x40)
+    {
         return 0;
+    }
 
     if (entry->var4 & 0x02) // start channel
     {
+        ++ACTIVE_CHANNELS;
         entry->commandPtr = entry->dataPtr;
         entry->var4 &= 0xFFFD;
         entry->var18 = 0;
@@ -641,11 +649,13 @@ int fadeMusic (int cx_, int si_, int dx_)
                 {
                     if (!(channelTable2[i].var4 & 0x40))
                         channelTable2[i].var4 |= 0x40;
+                    ACTIVE_CHANNELS = 0;
                 }
 
                 // RESTART
                 if (dx_ & 0x80) // start all
                 {
+                    ACTIVE_CHANNELS = 0;
                     channelTable2[i].var4 = 0x40;
                     cx_ &= 0x7F;
 
@@ -722,9 +732,9 @@ int update ()
     {
         currentMusicPtr2 = currentMusicPtr;
 
-        if (!executeMusicCommand (&channelTable2[i]))
+        executeMusicCommand (&channelTable2[i]);
 
-            si = &channelTable2[i];
+        si = &channelTable2[i];
 
         if (channelTable2[i].var4 & 4)
         {
@@ -736,6 +746,9 @@ int update ()
 
         applyMusicCommandToOPL (si, &channelDataTable[i]);
     }
+
+    if (ACTIVE_CHANNELS == 0)
+        musicEnd ();
 
     return 0;
 }
