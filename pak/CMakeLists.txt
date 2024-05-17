@@ -27,7 +27,6 @@ add_executable (pak
     bgfxShader.h
     body.cpp
     body.h
-    buffer.h
     camera.cpp
     camera.h
     debugHandle.cpp

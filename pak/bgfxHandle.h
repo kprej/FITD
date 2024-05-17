@@ -31,8 +31,12 @@ public:
 
     void shutdown ();
 
+    void createFontTexture (uint16_t height_, uint16_t width_);
+
     void setPalette (std::vector<std::byte> const &palette_);
     void setBackground (std::vector<std::byte> const &texture_, int offest_ = 0);
+    void
+    addText (std::vector<std::byte> const &texture_, uint16_t xOffset_, uint8_t width_);
 
     void fadeInBackground (int msec_ = 500);
     void fadeOutBackground (int msec_ = 500);
@@ -48,6 +52,11 @@ protected:
     bool windowHidden () const;
 
 private:
+    void createLayouts ();
+    void createTextureHandles ();
+    void createBackgroundVert ();
+    void createUniforms ();
+
     void debug ();
 
     void drawBackground ();

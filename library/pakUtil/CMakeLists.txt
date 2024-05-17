@@ -2,6 +2,7 @@ set(INC_DIR ${PROJECT_SOURCE_DIR}/include/pakUtil)
 set(SRC_DIR ${PROJECT_SOURCE_DIR}/library/pakUtil)
 
 set(INC
+    ${INC_DIR}/buffer.h
     ${INC_DIR}/pakFile.h
     )
 

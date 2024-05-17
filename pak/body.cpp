@@ -50,7 +50,7 @@ public:
     vector<sGroup> groups;
     vector<sPrimitive> primitives;
 
-    vector<raw_t> raw;
+    vector<rawBody_t> rawBody;
     vector<uint16_t> points;
 
     bgfx::VertexBufferHandle vBuffer;
@@ -95,7 +95,7 @@ void body_t::parseData (vector<byte> const &data_)
         vert.x = bodyBuffer.get<int16_t> ();
         vert.y = bodyBuffer.get<int16_t> ();
         vert.z = bodyBuffer.get<int16_t> ();
-        m_d->raw.push_back ({float (vert.x), float (vert.y), float (vert.z)});
+        m_d->rawBody.push_back ({float (vert.x), float (vert.y), float (vert.z)});
     }
 
     if (m_d->flags & ANIM)
@@ -275,7 +275,7 @@ void body_t::parseData (vector<byte> const &data_)
     }
 
     m_d->vBuffer = bgfx::createVertexBuffer (
-        bgfx::makeRef (m_d->raw.data (), sizeof (raw_t) * m_d->raw.size ()),
+        bgfx::makeRef (m_d->rawBody.data (), sizeof (rawBody_t) * m_d->rawBody.size ()),
         GS ()->handle.bodyVertexLayout ());
 
     m_d->iBuffer = bgfx::createIndexBuffer (
@@ -285,19 +285,16 @@ void body_t::parseData (vector<byte> const &data_)
 void body_t::rotateX (float x_)
 {
     m_d->rotation.x += x_;
-    m_d->rotation.x = glm::clamp (m_d->rotation.x, 0.f, 360.f);
 }
 
 void body_t::rotateY (float y_)
 {
     m_d->rotation.y += y_;
-    m_d->rotation.y = glm::clamp (m_d->rotation.y, 0.f, 360.f);
 }
 
 void body_t::rotateZ (float z_)
 {
     m_d->rotation.z += z_;
-    m_d->rotation.z = glm::clamp (m_d->rotation.z, 0.f, 360.f);
 }
 
 void body_t::pos (float x_, float y_, float z_)
@@ -305,7 +302,12 @@ void body_t::pos (float x_, float y_, float z_)
     m_d->position = glm::vec3 (x_, y_, z_);
 }
 
-void body_t::scale (float scale_)
+void body_t::updateScale (float scale_)
+{
+    m_d->scale += scale_;
+}
+
+void body_t::setScale (float scale_)
 {
     m_d->scale = scale_;
 }
@@ -320,7 +322,7 @@ bgfx::IndexBufferHandle const &body_t::indexBuffer () const
     return m_d->iBuffer;
 }
 
-vector<body_t::primitive_t> const &body_t::primitives () const
+vector<primitive_t> const &body_t::primitives () const
 {
     return m_d->prims;
 }

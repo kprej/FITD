@@ -47,6 +47,9 @@ void aitd_t::_init ()
 
     MP ()->setMusicPak (GS ()->paks.at ("LISTMUS"));
     MP ()->setTrackNames (aitd::TRACK_NAMES);
+
+    GS ()->handle.createFontTexture (16, 1797);
+    GS ()->font.init (GS ()->paks.at ("ITD_RESS").pak (ress_t::ITDFONT), 1797);
 }
 
 void aitd_t::_start ()
@@ -59,7 +62,6 @@ void aitd_t::_start ()
     case state_t::INTRO_SCREEN:
         break;
     }
-    //    makeIntroScreens ();
 }
 
 void aitd_t::_readBook (int index_, int type_)

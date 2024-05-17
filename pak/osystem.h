@@ -2,12 +2,12 @@
 #include "bgfxHandle.h"
 #include "camera.h"
 #include "debugHandle.h"
+#include "font.h"
 #include "game.h"
+#include "musicPlayer.h"
 #include "pakFile.h"
 #include "sound.h"
 #include "types.h"
-
-#include "musicPlayer.h"
 
 #include <SDL3/SDL.h>
 
@@ -25,6 +25,7 @@ struct gameState_t
     std::map<std::string, pakFile_t> paks;
 
     std::unique_ptr<game_t> game;
+    font_t font;
 
     float width;
     float height;

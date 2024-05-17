@@ -1,6 +1,7 @@
 #include "bgfxHandle.h"
 #include "bgfxShader.h"
 #include "osystem.h"
+#include "vertTypes.h"
 
 #include <bgfx/platform.h>
 
@@ -19,6 +20,16 @@
 #include <array>
 using namespace std;
 
+namespace
+{
+textureVert_t const BACKGROUND_VERT[6] = {{0.f, 0.f, 100.f, 0.f, 0.f},
+                                          {320.f, 200.f, 100.f, 1.f, 1.f},
+                                          {320.f, 0.f, 100.f, 1.f, 0.f},
+                                          {0.f, 0.f, 100.f, 0.f, 0.f},
+                                          {0.f, 200.f, 100.f, 0.f, 1.f},
+                                          {320.f, 200.f, 100.f, 1.f, 1.f}};
+}
+
 class bgfxHandle_t::private_t
 {
 public:
@@ -27,10 +38,13 @@ public:
     private_t ()
         : initParam ()
         , backgroundTexture (BGFX_INVALID_HANDLE)
+        , fontTexture (BGFX_INVALID_HANDLE)
         , paletteTexture (BGFX_INVALID_HANDLE)
         , backgroundTextureUniform (BGFX_INVALID_HANDLE)
         , paletteTextureUniform (BGFX_INVALID_HANDLE)
         , alphaTextureUniform (BGFX_INVALID_HANDLE)
+        , polyColorUniform (BGFX_INVALID_HANDLE)
+        , backgroundVertexBuffer (BGFX_INVALID_HANDLE)
         , backgroundShader (BGFX_INVALID_HANDLE)
         , maskBackgroundShader (BGFX_INVALID_HANDLE)
         , flatShader (BGFX_INVALID_HANDLE)
@@ -49,6 +63,7 @@ public:
     bgfx::Init initParam;
 
     bgfx::TextureHandle backgroundTexture;
+    bgfx::TextureHandle fontTexture;
     bgfx::TextureHandle paletteTexture;
 
     bgfx::UniformHandle backgroundTextureUniform;
@@ -56,7 +71,9 @@ public:
     bgfx::UniformHandle alphaTextureUniform;
     bgfx::UniformHandle polyColorUniform;
 
-    bgfx::VertexLayout backgroundLayout;
+    bgfx::VertexBufferHandle backgroundVertexBuffer;
+
+    bgfx::VertexLayout textureLayout;
     bgfx::VertexLayout bodyLayout;
 
     backgroundState_t backgroundState;
@@ -158,28 +175,10 @@ void bgfxHandle_t::init ()
     GS ()->debug.init (m_d->window);
     GS ()->debug.draw.connect<&bgfxHandle_t::debug> (this);
 
-    m_d->backgroundLayout.begin ()
-        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
-        .end ();
-
-    m_d->bodyLayout.begin ()
-        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
-        .end ();
-
-    PLOGD << "Create background Textures";
-    m_d->backgroundTexture =
-        bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
-    m_d->paletteTexture =
-        bgfx::createTexture2D (3, 256, false, 1, bgfx::TextureFormat::R8U);
-
-    m_d->backgroundTextureUniform =
-        bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
-    m_d->paletteTextureUniform =
-        bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
-
-    m_d->alphaTextureUniform = bgfx::createUniform ("s_alpha", bgfx::UniformType::Vec4);
-    m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
+    createLayouts ();
+    createTextureHandles ();
+    createBackgroundVert ();
+    createUniforms ();
 
     PLOGD << "Load shaders";
     m_d->backgroundShader = loadProgram ("background");
@@ -262,14 +261,29 @@ void bgfxHandle_t::setPalette (vector<byte> const &palette_)
 
 void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
 {
-    bgfx::updateTexture2D (m_d->backgroundTexture,
+    bgfx::updateTexture2D (
+        m_d->backgroundTexture,
+        0,
+        0,
+        0,
+        0,
+        320,
+        200,
+        bgfx::copy (texture_.data () + offset_, texture_.size () - offset_));
+}
+
+void bgfxHandle_t::addText (vector<byte> const &texture_,
+                            uint16_t xOffset_,
+                            uint8_t width_)
+{
+    bgfx::updateTexture2D (m_d->fontTexture,
                            0,
                            0,
+                           xOffset_,
                            0,
-                           0,
-                           320,
-                           200,
-                           bgfx::copy (texture_.data () + offset_, 320 * 200));
+                           width_,
+                           16,
+                           bgfx::copy (texture_.data (), texture_.size ()));
 }
 
 void bgfxHandle_t::fadeInBackground (int msec_)
@@ -288,7 +302,7 @@ void bgfxHandle_t::fadeOutBackground (int msec_)
         return;
 
     m_d->backgroundState = backgroundState_t::FADING_OUT;
-    m_d->fadeStep = 255;
+    m_d->fadeStep = msec_;
     m_d->fadeTimeMSec = msec_;
 }
 
@@ -321,6 +335,10 @@ void bgfxHandle_t::drawBody (body_t const &body_)
     }
 }
 
+void bgfxHandle_t::renderText (std::string const &text_)
+{
+}
+
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
 {
     return m_d->bodyLayout;
@@ -334,6 +352,7 @@ void bgfxHandle_t::shutdown ()
     bgfx::destroy (m_d->flatShader);
 
     bgfx::destroy (m_d->backgroundTexture);
+    bgfx::destroy (m_d->fontTexture);
     bgfx::destroy (m_d->paletteTexture);
 
     bgfx::destroy (m_d->backgroundTextureUniform);
@@ -347,6 +366,50 @@ void bgfxHandle_t::shutdown ()
     bgfx::shutdown ();
 
     SDL_DestroyWindow (m_d->window);
+}
+
+void bgfxHandle_t::createFontTexture (uint16_t height_, uint16_t width_)
+{
+    m_d->fontTexture =
+        bgfx::createTexture2D (width_, height_, false, 1, bgfx::TextureFormat::R8U);
+}
+
+void bgfxHandle_t::createLayouts ()
+{
+    m_d->textureLayout.begin ()
+        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
+        .end ();
+
+    m_d->bodyLayout.begin ()
+        .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
+        .end ();
+}
+
+void bgfxHandle_t::createTextureHandles ()
+{
+    PLOGD << "Create Textures Handles";
+    m_d->backgroundTexture =
+        bgfx::createTexture2D (320, 200, false, 1, bgfx::TextureFormat::R8U);
+    m_d->paletteTexture =
+        bgfx::createTexture2D (3, 256, false, 1, bgfx::TextureFormat::R8U);
+}
+
+void bgfxHandle_t::createBackgroundVert ()
+{
+    m_d->backgroundVertexBuffer = bgfx::createVertexBuffer (
+        bgfx::makeRef (BACKGROUND_VERT, sizeof (textureVert_t) * 6), m_d->textureLayout);
+}
+
+void bgfxHandle_t::createUniforms ()
+{
+    m_d->backgroundTextureUniform =
+        bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
+    m_d->paletteTextureUniform =
+        bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
+
+    m_d->alphaTextureUniform = bgfx::createUniform ("s_alpha", bgfx::UniformType::Vec4);
+    m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
 }
 
 void bgfxHandle_t::debug ()
@@ -375,70 +438,7 @@ void bgfxHandle_t::drawBackground ()
         break;
     };
 
-    bgfx::TransientVertexBuffer transientBuffer;
-    bgfx::allocTransientVertexBuffer (&transientBuffer, 6, m_d->backgroundLayout);
-
-    struct sVertice
-    {
-        float position[3];
-        float texcoord[2];
-    };
-
-    sVertice *pVertices = (sVertice *)transientBuffer.data;
-
-    float quadVertices[6 * 3];
-    float quadUV[6 * 2];
-
-    // 0
-    pVertices->position[0] = 0.f;
-    pVertices->position[1] = 0.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 0.f;
-    pVertices->texcoord[1] = 0.f;
-    pVertices++;
-
-    // 2
-    pVertices->position[0] = 320.f;
-    pVertices->position[1] = 200.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 1.f;
-    pVertices->texcoord[1] = 1.f;
-    pVertices++;
-
-    // 1
-    pVertices->position[0] = 320.f;
-    pVertices->position[1] = 0.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 1.f;
-    pVertices->texcoord[1] = 0.f;
-    pVertices++;
-
-    //------------------------
-    // 3
-    pVertices->position[0] = 0.f;
-    pVertices->position[1] = 0.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 0.f;
-    pVertices->texcoord[1] = 0.f;
-    pVertices++;
-
-    // 4
-    pVertices->position[0] = 0.f;
-    pVertices->position[1] = 200.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 0.f;
-    pVertices->texcoord[1] = 1.f;
-    pVertices++;
-
-    // 5
-    pVertices->position[0] = 320.f;
-    pVertices->position[1] = 200.f;
-    pVertices->position[2] = 100.f;
-    pVertices->texcoord[0] = 1.f;
-    pVertices->texcoord[1] = 1.f;
-    pVertices++;
-
-    bgfx::setVertexBuffer (0, &transientBuffer);
+    bgfx::setVertexBuffer (0, m_d->backgroundVertexBuffer);
 
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                     BGFX_STATE_BLEND_SRC_ALPHA);
@@ -454,7 +454,7 @@ void bgfxHandle_t::drawBackground ()
 void bgfxHandle_t::processFadeIn ()
 {
     m_d->fadeStep += GS ()->delta;
-    m_d->alpha = glm::smoothstep (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
+    m_d->alpha = lerp (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
 
     if (m_d->alpha < 1.f)
         m_d->backgroundState = backgroundState_t::FADING_IN;
@@ -466,7 +466,7 @@ void bgfxHandle_t::processFadeIn ()
 void bgfxHandle_t::processFadeOut ()
 {
     m_d->fadeStep -= GS ()->delta;
-    m_d->alpha = glm::smoothstep (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
+    m_d->alpha = lerp (0.f, 1.f, m_d->fadeStep / m_d->fadeTimeMSec);
     if (m_d->alpha > 0.f)
         m_d->backgroundState = backgroundState_t::FADING_OUT;
 

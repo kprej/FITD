@@ -1,6 +1,5 @@
 #include "osystem.h"
 #include "bgfxHandle.h"
-#include "font.h"
 
 #include "AITD/AITD.h"
 
@@ -116,6 +115,7 @@ bool osystem_t::run ()
 
     GS ()->handle.startFrame ();
     GS ()->game->start ();
+
     GS ()->handle.endFrame ();
 
     return true;
@@ -228,9 +228,6 @@ void osystem_t::loadPaks ()
 
         GS ()->paks.insert ({file.path ().stem ().string (), pakFile_t (file.path ())});
     }
-
-    font_t font;
-    font.init (GS ()->paks.at ("ITD_RESS").pak (5));
 }
 
 void osystem_t::setupAudio ()

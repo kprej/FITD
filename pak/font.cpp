@@ -1,15 +1,32 @@
 #include "font.h"
 #include "buffer.h"
+#include "osystem.h"
 
 #include <plog/Log.h>
 
+#include "bgfxHandle.h"
+
 using namespace std;
+
+namespace
+{
+unsigned char flagTable[] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+struct character_t
+{
+    uint8_t width;
+    uint8_t height;
+    float bottomLeftCorner[2];
+    float topRightCorner[2];
+};
+} // namespace
 
 class font_t::private_t
 {
 public:
     ~private_t () = default;
     private_t () {}
+
+    map<uint8_t, character_t> characters;
 };
 
 font_t::~font_t () = default;
@@ -18,133 +35,118 @@ font_t::font_t ()
 {
 }
 
-void font_t::init (pak_t const &pak_)
+void font_t::init (pak_t const &pak_, uint16_t textureWidth_)
 {
     int16_t tempDx;
     int16_t tempAxFlip;
 
     buffer_t buffer (pak_.data ());
 
-    auto fontVar1 = pak_.data (); // fontPtr
-
     tempDx = buffer.get<int16_t> (); // alignement
 
-    uint8_t fontSm1 = buffer.get<uint8_t> (); // character height
-    uint8_t fontSm2 = buffer.get<uint8_t> (); // character size
+    uint8_t characterHeight = buffer.get<uint8_t> ();
+    uint8_t characterWidth = buffer.get<uint8_t> ();
 
-    if (!fontSm2)
+    if (!characterWidth)
     {
-        fontSm2 = buffer.get<int16_t> ();
+        characterWidth = buffer.get<int16_t> ();
     }
 
     tempAxFlip = buffer.get<int16_t> ();
 
     tempAxFlip = ((tempAxFlip & 0xFF) << 8) | ((tempAxFlip & 0xFF00) >> 8);
 
-    PLOGD << "Size: " << pak_.data ().size ();
-    PLOGD << "TempDX: " << tempDx;
-    PLOGD << "TempAX: " << tempAxFlip;
-    PLOGD << "FontSm1: " << to_string (fontSm1);
-    PLOGD << "FontSm2: " << to_string (fontSm2);
-    PLOGD << tempAxFlip - (tempDx & 0xFF) * 2;
-    auto fontVar4 = pak_.data ();
+    auto characterLocation = pak_.data ().begin () + 8;
 
-    auto fontVar5 = vector<byte> (
-        pak_.data ().begin () + tempAxFlip - (tempDx & 0xFF) * 2, pak_.data ().end ());
+    auto fontVar5 = pak_.data ().begin () + (tempAxFlip - (tempDx & 0xFF) * 2);
 
-    PLOGD << fontVar5.size ();
-    // currentFontColor = color;
-
-    // fontSm3 = color;
-
-    int fontVar6 = 0;
-    int fontSm7 = 0;
     int16_t fontSm9 = 0x80;
 
-    string test = "abcz";
+    uint32_t xOffset = 0;
 
-    for (auto character : test)
+    for (unsigned char i = 0; i < 255; ++i)
     {
         uint16_t data;
-        uint16_t dx;
+        uint16_t characterOffset;
 
-        buffer_t dataPtr (
-            vector<byte> (fontVar5.begin () + character * 2, fontVar5.end ()));
+        auto c = fontVar5 + i * 2;
 
-        data = dataPtr.get<uint16_t> ();
-        PLOGD << "DATA: " << data;
-
+        data = (uint8_t (*c) | uint8_t (*(c + 1)) << 8);
         data = ((data & 0xFF) << 8) | ((data & 0xFF00) >> 8);
-        PLOGD << "FLIP: " << data;
 
-        dx = data;
+        characterOffset = data;
 
         data >>= 12;
-        PLOGD << "shift: " << data;
 
         if (data & 0xF) // real character (width != 0)
         {
-            uint8_t *characterPtr;
-            int bp;
-            int ch;
+            int bp = 0;
 
-            dx &= 0xFFF;
+            int cl = data & 0xF;
 
-            characterPtr = (dx >> 3) + reinterpret_cast<uint8_t *> (fontVar4.front ());
+            uint8_t width = cl;
 
-            /*
-            fontSm9 = flagTable[dx & 7];
+            character_t character;
 
-            bp = fontSm7;
+            character.width = cl;
+            character.height = characterHeight;
 
-            fontSm8 = fontVar6;
+            characterOffset &= 0xFFF;
+            auto characterPtr = (characterLocation + (characterOffset >> 3));
 
-            ch;
+            fontSm9 = flagTable[characterOffset & 7];
 
-            for (ch = fontSm1; ch > 0; ch--)
+            vector<byte> outChar;
+            for (int ch = characterHeight; ch > 0; ch--)
             {
                 if (bp >= 200)
                     return;
-                char *outPtr = logicalScreen + bp * 320 + fontSm8;
 
                 int dh = fontSm9;
-                int cl = data & 0xF;
 
-                int al = *characterPtr;
+                int al = int (*characterPtr);
 
-                int bx;
+                int bx = 0;
 
                 bp++;
 
-                for (bx = 0; cl > 0; cl--)
+                for (int cl = width; cl > 0; cl--)
                 {
                     if (dh & al)
-                    {
-                        *(outPtr) = (char)fontSm3;
-                    }
-
-                    outPtr++;
+                        outChar.push_back (byte (1));
+                    else
+                        outChar.push_back (byte (0));
 
                     dh = ((dh >> 1) & 0x7F) | ((dh << 7) & 0x80);
 
                     if (dh & 0x80)
                     {
                         bx++;
-                        al = *(characterPtr + bx);
+                        al = int (*(characterPtr + bx));
                     }
                 }
-
-                characterPtr += fontSm2;
+                characterPtr += characterWidth;
             }
 
-            fontVar6 += data & 0xF;
-            */
-        }
-        else // space character
-        {
-            //            fontVar6 += g_fontInterWordSpace;
-        }
+            if (!outChar.empty ())
+            {
+                GS ()->handle.addText (outChar, xOffset, width);
 
-        //       fontVar6 += g_fontInterLetterSpace;
+                character.bottomLeftCorner[0] = float (xOffset) / float (textureWidth_);
+                character.bottomLeftCorner[1] = 0.f;
+
+                character.topRightCorner[0] =
+                    float (xOffset + width) / float (textureWidth_);
+                character.topRightCorner[1] = 1.f;
+
+                m_d->characters[i] = character;
+
+                xOffset += width;
+            }
+        }
     }
+}
+
+void font_t::render (string const &text_)
+{
 }

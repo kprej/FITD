@@ -1,4 +1,5 @@
 #pragma once
+#include "vertTypes.h"
 
 #include <bgfx/bgfx.h>
 #include <glm/mat4x4.hpp>
@@ -9,18 +10,6 @@
 class body_t
 {
 public:
-    struct raw_t
-    {
-        float pos[3];
-    };
-
-    struct primitive_t
-    {
-        uint16_t start;
-        uint8_t size;
-        float color;
-    };
-
     ~body_t ();
     body_t ();
 
@@ -32,7 +21,8 @@ public:
 
     void pos (float x_, float y_, float z_);
 
-    void scale (float scale_);
+    void updateScale (float scale_);
+    void setScale (float scale_);
 
     bgfx::VertexBufferHandle const &vertexBuffer () const;
     bgfx::IndexBufferHandle const &indexBuffer () const;

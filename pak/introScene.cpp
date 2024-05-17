@@ -4,6 +4,7 @@
 #include "osystem.h"
 
 #include <imgui.h>
+#include <plog/Log.h>
 
 #include <map>
 #include <string>
@@ -34,6 +35,8 @@ public:
     body_t tatou;
     state_t state;
     uint16_t introTime;
+    float shrinkStep = 4500;
+    float shrinkTimeMSec = 4500;
 };
 
 introScene_t::~introScene_t ()
@@ -46,7 +49,7 @@ introScene_t::introScene_t ()
     m_d->tatou.parseData (GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
 
     m_d->tatou.rotateY (90);
-    m_d->tatou.scale (0.45f);
+    m_d->tatou.setScale (0.45f);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
@@ -84,9 +87,14 @@ void introScene_t::run ()
 
         break;
     case DILLO:
+    {
         GS ()->handle.drawBody (m_d->tatou);
-        m_d->tatou.rotateY (0.2);
+        m_d->tatou.rotateY (-0.2);
+        m_d->shrinkStep -= GS ()->delta;
+        m_d->tatou.setScale (glm::clamp (
+            lerp (0.f, 0.45f, m_d->shrinkStep / m_d->shrinkTimeMSec), 0.0f, 0.45f));
         break;
+    }
     case EXIT:
         exit ();
         break;
