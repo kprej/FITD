@@ -66,4 +66,5 @@ add_subdirectory(library/pakUtil)
 add_subdirectory(library/sound)
 
 add_subdirectory(adlibInTheDark)
+add_subdirectory(fontLoad)
 add_subdirectory(pak)

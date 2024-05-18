@@ -1,0 +1,12 @@
+$input v_texcoord0
+
+#include "bgfx_shader.sh"
+
+highp USAMPLER2D(s_fontTexture, 0);
+uniform vec4 s_fontColor;
+
+void main()
+{
+    vec4 sampled = vec4(1.0, 1.0, 1.0, texelFetch(s_fontTexture, ivec2(v_texcoord0.x,v_texcoord0.y), 0).r);
+    gl_FragColor = s_fontColor * sampled;
+}

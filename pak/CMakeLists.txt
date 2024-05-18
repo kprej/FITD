@@ -1,6 +1,8 @@
 set(SHADERS
     shaders/background_vs.h.bin
     shaders/background_fs.h.bin
+    shaders/font_vs.h.bin
+    shaders/font_fs.h.bin
     shaders/maskBackground_vs.h.bin
     shaders/maskBackground_fs.h.bin
     shaders/ramp_vs.h.bin

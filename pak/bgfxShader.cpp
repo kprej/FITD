@@ -4,6 +4,8 @@
 #include "shaders/background_vs.h.bin"
 #include "shaders/flat_fs.h.bin"
 #include "shaders/flat_vs.h.bin"
+#include "shaders/font_fs.h.bin"
+#include "shaders/font_vs.h.bin"
 #include "shaders/maskBackground_fs.h.bin"
 #include "shaders/maskBackground_vs.h.bin"
 #include "shaders/noise_fs.h.bin"
@@ -24,6 +26,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER (background_vs),
     BGFX_EMBEDDED_SHADER (flat_fs),
     BGFX_EMBEDDED_SHADER (flat_vs),
+    BGFX_EMBEDDED_SHADER (font_fs),
+    BGFX_EMBEDDED_SHADER (font_vs),
     BGFX_EMBEDDED_SHADER (maskBackground_fs),
     BGFX_EMBEDDED_SHADER (maskBackground_vs),
     BGFX_EMBEDDED_SHADER (noise_fs),

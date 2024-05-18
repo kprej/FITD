@@ -16,3 +16,5 @@ cat $1.bin >> $1_fs.h.bin
 
 echo "static const uint8_t $1_fs_essl[] = {0};" | cat >> $1_fs.h.bin
 echo "static const uint8_t $1_fs_dx11[] = {0};" | cat >> $1_fs.h.bin
+
+rm $1.bin

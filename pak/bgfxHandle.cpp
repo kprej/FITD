@@ -41,20 +41,23 @@ public:
         , fontTexture (BGFX_INVALID_HANDLE)
         , paletteTexture (BGFX_INVALID_HANDLE)
         , backgroundTextureUniform (BGFX_INVALID_HANDLE)
+        , fontTextureUniform (BGFX_INVALID_HANDLE)
         , paletteTextureUniform (BGFX_INVALID_HANDLE)
         , alphaTextureUniform (BGFX_INVALID_HANDLE)
         , polyColorUniform (BGFX_INVALID_HANDLE)
+        , fontColorUniform (BGFX_INVALID_HANDLE)
         , backgroundVertexBuffer (BGFX_INVALID_HANDLE)
         , backgroundShader (BGFX_INVALID_HANDLE)
         , maskBackgroundShader (BGFX_INVALID_HANDLE)
         , flatShader (BGFX_INVALID_HANDLE)
+        , fontShader (BGFX_INVALID_HANDLE)
         , noiseShader (BGFX_INVALID_HANDLE)
         , rampShader (BGFX_INVALID_HANDLE)
         , oldWindowSize (-1, -1)
         , gameViewId (0)
         , debugViewId (2)
         , backgroundMode (backgroundMode_t::_2D)
-        , alpha (0)
+        , alpha (255)
         , bodyState (0)
         , backState (0)
     {
@@ -67,9 +70,11 @@ public:
     bgfx::TextureHandle paletteTexture;
 
     bgfx::UniformHandle backgroundTextureUniform;
+    bgfx::UniformHandle fontTextureUniform;
     bgfx::UniformHandle paletteTextureUniform;
     bgfx::UniformHandle alphaTextureUniform;
     bgfx::UniformHandle polyColorUniform;
+    bgfx::UniformHandle fontColorUniform;
 
     bgfx::VertexBufferHandle backgroundVertexBuffer;
 
@@ -84,6 +89,7 @@ public:
     bgfx::ProgramHandle backgroundShader;
     bgfx::ProgramHandle maskBackgroundShader;
     bgfx::ProgramHandle flatShader;
+    bgfx::ProgramHandle fontShader;
     bgfx::ProgramHandle noiseShader;
     bgfx::ProgramHandle rampShader;
 
@@ -183,6 +189,7 @@ void bgfxHandle_t::init ()
     PLOGD << "Load shaders";
     m_d->backgroundShader = loadProgram ("background");
     m_d->flatShader = loadProgram ("flat");
+    m_d->fontShader = loadProgram ("font");
 }
 
 void bgfxHandle_t::startFrame ()
@@ -342,12 +349,12 @@ void bgfxHandle_t::renderText (bgfx::TransientVertexBuffer const &buffer_)
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                     BGFX_STATE_BLEND_SRC_ALPHA);
 
-    bgfx::setTexture (0, m_d->backgroundTextureUniform, m_d->fontTexture);
-    bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
+    bgfx::setTexture (0, m_d->fontTextureUniform, m_d->fontTexture);
 
-    bgfx::setUniform (m_d->alphaTextureUniform, &m_d->alpha);
+    float color[4] = {100, 100, 100, 255};
+    bgfx::setUniform (m_d->fontColorUniform, color);
 
-    bgfx::submit (m_d->gameViewId, m_d->backgroundShader);
+    bgfx::submit (m_d->gameViewId, m_d->fontShader);
 }
 
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
@@ -366,15 +373,18 @@ void bgfxHandle_t::shutdown ()
 
     bgfx::destroy (m_d->backgroundShader);
     bgfx::destroy (m_d->flatShader);
+    bgfx::destroy (m_d->fontShader);
 
     bgfx::destroy (m_d->backgroundTexture);
     bgfx::destroy (m_d->fontTexture);
     bgfx::destroy (m_d->paletteTexture);
 
     bgfx::destroy (m_d->backgroundTextureUniform);
+    bgfx::destroy (m_d->fontTextureUniform);
     bgfx::destroy (m_d->paletteTextureUniform);
     bgfx::destroy (m_d->alphaTextureUniform);
     bgfx::destroy (m_d->polyColorUniform);
+    bgfx::destroy (m_d->fontColorUniform);
 
     GS ()->debug.shutdown ();
 
@@ -421,11 +431,14 @@ void bgfxHandle_t::createUniforms ()
 {
     m_d->backgroundTextureUniform =
         bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
+    m_d->fontTextureUniform =
+        bgfx::createUniform ("s_fontTexture", bgfx::UniformType::Sampler);
     m_d->paletteTextureUniform =
         bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
 
     m_d->alphaTextureUniform = bgfx::createUniform ("s_alpha", bgfx::UniformType::Vec4);
     m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
+    m_d->fontColorUniform = bgfx::createUniform ("s_fontColor", bgfx::UniformType::Vec4);
 }
 
 void bgfxHandle_t::debug ()
