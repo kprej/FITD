@@ -2,6 +2,8 @@
 
 #include "pakFile.h"
 
+#include <glm/glm.hpp>
+
 #include <memory>
 
 class font_t
@@ -12,7 +14,7 @@ public:
 
     void init (pak_t const &pak_, uint16_t textureWidth_);
 
-    void render (std::string const &text_);
+    void render (glm::vec2 const &pos_, std::string const &text_);
 
 private:
     class private_t;

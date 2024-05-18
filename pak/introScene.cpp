@@ -69,6 +69,8 @@ void introScene_t::enter ()
 void introScene_t::run ()
 {
     m_d->introTime += GS ()->delta;
+
+    GS ()->font.render ({0.f, 0.f}, "poop");
     switch (m_d->state)
     {
     case ENTER:

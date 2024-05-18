@@ -62,6 +62,7 @@ void aitd_t::_start ()
     case state_t::INTRO_SCREEN:
         break;
     }
+    makeIntroScreens ();
 }
 
 void aitd_t::_readBook (int index_, int type_)

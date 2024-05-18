@@ -16,5 +16,5 @@ struct primitive_t
 struct textureVert_t
 {
     float position[3];
-    float texcoord[2];
+    float texCoord[2];
 };

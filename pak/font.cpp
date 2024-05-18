@@ -130,14 +130,14 @@ void font_t::init (pak_t const &pak_, uint16_t textureWidth_)
 
             if (!outChar.empty ())
             {
-                GS ()->handle.addText (outChar, xOffset, width);
+                GS ()->handle.addFontChar (outChar, xOffset, width);
 
                 character.bottomLeftCorner[0] = float (xOffset) / float (textureWidth_);
-                character.bottomLeftCorner[1] = 0.f;
+                character.bottomLeftCorner[1] = 1.f;
 
                 character.topRightCorner[0] =
                     float (xOffset + width) / float (textureWidth_);
-                character.topRightCorner[1] = 1.f;
+                character.topRightCorner[1] = 0.f;
 
                 m_d->characters[i] = character;
 
@@ -147,6 +147,96 @@ void font_t::init (pak_t const &pak_, uint16_t textureWidth_)
     }
 }
 
-void font_t::render (string const &text_)
+void font_t::render (glm::vec2 const &pos_, string const &text_)
 {
+    uint32_t const vertCount = 6 * text_.size ();
+
+    bgfx::TransientVertexBuffer transientVertex;
+    bgfx::allocTransientVertexBuffer (
+        &transientVertex, vertCount, GS ()->handle.textureVertexLayout ());
+
+    glm::vec2 currentPos = pos_;
+    textureVert_t *verts = (textureVert_t *)transientVertex.data;
+
+    auto i = verts;
+    for (auto c : text_)
+    {
+        auto const character = m_d->characters[c];
+
+        // o.o
+        // . .
+        // *.o
+        i->position[0] = currentPos.x;
+        i->position[1] = currentPos.y;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.bottomLeftCorner[0];
+        i->texCoord[1] = character.bottomLeftCorner[1];
+
+        ++i;
+
+        // o.o
+        // . .
+        // o.*
+        i->position[0] = currentPos.x + character.width;
+        i->position[1] = currentPos.y;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.topRightCorner[0];
+        i->texCoord[1] = character.bottomLeftCorner[1];
+
+        ++i;
+
+        // o.*
+        // . .
+        // o.o
+        i->position[0] = currentPos.x + character.width;
+        i->position[1] = currentPos.y + character.height;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.topRightCorner[0];
+        i->texCoord[1] = character.topRightCorner[1];
+
+        ++i;
+
+        // o.o
+        // . .
+        // *.o
+        i->position[0] = currentPos.x;
+        i->position[1] = currentPos.y;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.bottomLeftCorner[0];
+        i->texCoord[1] = character.bottomLeftCorner[1];
+
+        ++i;
+
+        // *.o
+        // . .
+        // o.o
+        i->position[0] = currentPos.x;
+        i->position[1] = currentPos.y + character.height;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.bottomLeftCorner[0];
+        i->texCoord[1] = character.topRightCorner[1];
+
+        ++i;
+
+        // o.*
+        // . .
+        // o.o
+        i->position[0] = currentPos.x + character.width;
+        i->position[1] = currentPos.y + character.height;
+        i->position[2] = 0;
+
+        i->texCoord[0] = character.topRightCorner[0];
+        i->texCoord[1] = character.topRightCorner[1];
+
+        ++i;
+
+        currentPos.x += character.width;
+    }
+
+    GS ()->handle.renderText (transientVertex);
 }

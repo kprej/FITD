@@ -272,9 +272,9 @@ void bgfxHandle_t::setBackground (vector<byte> const &texture_, int offset_)
         bgfx::copy (texture_.data () + offset_, texture_.size () - offset_));
 }
 
-void bgfxHandle_t::addText (vector<byte> const &texture_,
-                            uint16_t xOffset_,
-                            uint8_t width_)
+void bgfxHandle_t::addFontChar (vector<byte> const &texture_,
+                                uint16_t xOffset_,
+                                uint8_t width_)
 {
     bgfx::updateTexture2D (m_d->fontTexture,
                            0,
@@ -335,13 +335,29 @@ void bgfxHandle_t::drawBody (body_t const &body_)
     }
 }
 
-void bgfxHandle_t::renderText (std::string const &text_)
+void bgfxHandle_t::renderText (bgfx::TransientVertexBuffer const &buffer_)
 {
+    bgfx::setVertexBuffer (0, &buffer_);
+
+    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                    BGFX_STATE_BLEND_SRC_ALPHA);
+
+    bgfx::setTexture (0, m_d->backgroundTextureUniform, m_d->fontTexture);
+    bgfx::setTexture (1, m_d->paletteTextureUniform, m_d->paletteTexture);
+
+    bgfx::setUniform (m_d->alphaTextureUniform, &m_d->alpha);
+
+    bgfx::submit (m_d->gameViewId, m_d->backgroundShader);
 }
 
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
 {
     return m_d->bodyLayout;
+}
+
+bgfx::VertexLayout const &bgfxHandle_t::textureVertexLayout () const
+{
+    return m_d->textureLayout;
 }
 
 void bgfxHandle_t::shutdown ()
