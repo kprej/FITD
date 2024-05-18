@@ -57,7 +57,7 @@ void aitd_t::_start ()
     switch (m_d->state)
     {
     case state_t::INTRO_TATOU:
-        m_d->intro.run ();
+        // m_d->intro.run ();
         break;
     case state_t::INTRO_SCREEN:
         break;
@@ -73,6 +73,7 @@ void aitd_t::makeIntroScreens ()
 {
     GS ()->handle.setPalette (GS ()->paks.at ("ITD_RESS").data (ress_t::PALETTE_GAME));
     GS ()->handle.setBackground (GS ()->paks.at ("ITD_RESS").data (ress_t::TITLE), 770);
+    GS ()->font.render ({0.f, 0.f}, "poop");
 }
 
 void aitd_t::drawBox (int x_, int y_, int width_, int height_)
