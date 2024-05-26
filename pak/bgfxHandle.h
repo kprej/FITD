@@ -1,7 +1,5 @@
 #pragma once
 
-#include "body.h"
-
 #include <bgfx/bgfx.h>
 
 #include <nano_signal_slot.hpp>

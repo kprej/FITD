@@ -38,7 +38,7 @@ public:
         : viewId (2)
         , frameBuffer (BGFX_INVALID_HANDLE)
         , polyColorUniform (BGFX_INVALID_HANDLE)
-        , flatShader (BGFX_INVALID_HANDLE)
+        , bodyShader (BGFX_INVALID_HANDLE)
         , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
         , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
         , boundingBoxVertexBuffer (BGFX_INVALID_HANDLE)
@@ -51,7 +51,7 @@ public:
 
     bgfx::UniformHandle polyColorUniform;
 
-    bgfx::ProgramHandle flatShader;
+    bgfx::ProgramHandle bodyShader;
     bgfx::TextureHandle fieldModelInspectorTexture;
     bgfx::TextureHandle fieldModelInspectorDepth;
 
@@ -87,7 +87,7 @@ void bodyView_t::drawBody (body_t const &body_)
             state |= BGFX_STATE_PT_LINES;
 
         bgfx::setState (state);
-        bgfx::submit (m_d->viewId, m_d->flatShader);
+        bgfx::submit (m_d->viewId, m_d->bodyShader);
     }
 
     /*
@@ -102,7 +102,7 @@ void bodyView_t::drawBody (body_t const &body_)
     state |= BGFX_STATE_PT_LINES;
 
     bgfx::setState (state);
-    bgfx::submit (m_d->viewId, m_d->flatShader);
+    bgfx::submit (m_d->viewId, m_d->bodyShader);
     */
 }
 
@@ -110,7 +110,7 @@ void bodyView_t::init ()
 {
     m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
 
-    m_d->flatShader = loadProgram ("flat");
+    m_d->bodyShader = loadProgram ("body");
 
     m_d->boundingBoxVertexBuffer =
         bgfx::createVertexBuffer (bgfx::makeRef (BOUNDING_VERT, sizeof (rawBody_t) * 8),
@@ -176,7 +176,7 @@ void bodyView_t::startFrame ()
 
 void bodyView_t::shutdown ()
 {
-    bgfx::destroy (m_d->flatShader);
+    bgfx::destroy (m_d->bodyShader);
     bgfx::destroy (m_d->frameBuffer);
     bgfx::destroy (m_d->polyColorUniform);
     bgfx::destroy (m_d->boundingBoxVertexBuffer);

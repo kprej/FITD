@@ -162,6 +162,7 @@ void introScene_t::exit ()
 {
     if (GS ()->handle.fadeState () == fadeState_t::INVISIBLE)
     {
+        GS ()->debug.draw.disconnect<&introScene_t::debug> (this);
         m_d->state = FINISHED;
         m_d->lastState = EXIT;
         return;

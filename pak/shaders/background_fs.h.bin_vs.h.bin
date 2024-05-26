@@ -1,0 +1,2 @@
+static const uint8_t background_fs.h.bin_vs_essl[] = {0};
+static const uint8_t background_fs.h.bin_vs_dx11[] = {0};

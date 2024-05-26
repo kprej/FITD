@@ -74,7 +74,7 @@ void aitd_t::_start ()
         if (!m_d->intro->run ())
         {
             m_d->state = state_t::TITLE_SCREEN;
-            m_d->intro.reset ();
+            m_d->intro.reset (nullptr);
             m_d->title = make_unique<titleScene_t> ();
         }
         break;
@@ -84,8 +84,6 @@ void aitd_t::_start ()
         }
         break;
     }
-    //    GS ()->font.render ({0.f, 0.f}, "poop");
-    // kmakeIntroScreens ();
 }
 
 void aitd_t::_readBook (int index_, int type_)

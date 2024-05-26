@@ -84,7 +84,7 @@ void titleScene_t::enter ()
     GS ()->handle.setPalette (
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::PALETTE_GAME));
     GS ()->backgroundView.update (
-        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TITLE), 770);
+        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::FRAME_SPF), 0);
 
     m_d->state = TITLE;
 }
