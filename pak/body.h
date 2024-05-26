@@ -19,7 +19,7 @@ public:
     void rotateY (float y_);
     void rotateZ (float z_);
 
-    void pos (float x_, float y_, float z_);
+    void setPos (float x_, float y_, float z_);
 
     void updateScale (float scale_);
     void setScale (float scale_);
@@ -28,7 +28,12 @@ public:
     bgfx::IndexBufferHandle const &indexBuffer () const;
     std::vector<primitive_t> const &primitives () const;
 
+    glm::vec3 pos () const;
+    glm::vec3 center () const;
+
     glm::mat4 transform () const;
+
+    glm::mat4 boundingBox () const;
 
     void draw ();
 

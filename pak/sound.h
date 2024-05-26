@@ -11,7 +11,8 @@ public:
 
     void init (std::vector<std::byte> const &data_);
 
-    void play () const;
+    int play () const;
+    bool isPlaying () const;
 
 private:
     class private_t;

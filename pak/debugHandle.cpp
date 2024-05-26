@@ -22,23 +22,14 @@ public:
 
     private_t ()
         : init (false)
-        , fieldModelInspectorFB (BGFX_INVALID_HANDLE)
-        , fieldModelInspectorTexture (BGFX_INVALID_HANDLE)
-        , fieldModelInspectorDepth (BGFX_INVALID_HANDLE)
-        , oldWindowSize (-1, -1)
-        , debugViewId (2)
+        , viewId (0)
+        , frameBuffer (BGFX_INVALID_HANDLE)
     {
     }
 
     bool init;
-
-    bgfx::FrameBufferHandle fieldModelInspectorFB;
-    bgfx::TextureHandle fieldModelInspectorTexture;
-    bgfx::TextureHandle fieldModelInspectorDepth;
-
-    ImVec2 oldWindowSize;
-
-    uint8_t debugViewId;
+    uint8_t viewId;
+    bgfx::FrameBufferHandle frameBuffer;
 };
 
 debugHandle_t::~debugHandle_t ()
@@ -55,12 +46,14 @@ void debugHandle_t::init (SDL_Window *window_)
     PLOGD << "Init ImGui";
     ImGui::CreateContext ();
 
-    ImGui_Implbgfx_Init (255);
+    ImGui_Implbgfx_Init (m_d->viewId);
     if (!ImGui_ImplSDL3_InitForVulkan (window_))
     {
         PLOGF << "Failed to init ImGui";
         return;
     }
+
+    m_d->init = true;
 }
 
 void debugHandle_t::startFrame ()
@@ -69,8 +62,6 @@ void debugHandle_t::startFrame ()
     ImGui_ImplSDL3_NewFrame ();
 
     ImGui::NewFrame ();
-
-    bgfx::setViewName (m_d->debugViewId, "Debug");
 
     if (ImGui::BeginMainMenuBar ())
     {
@@ -86,43 +77,19 @@ void debugHandle_t::startFrame ()
         ImGui::EndMainMenuBar ();
     }
 
-    if ((GS ()->width != m_d->oldWindowSize[0]) ||
-        (GS ()->height != m_d->oldWindowSize[1]))
+    if (GS ()->screenSizeChanged || !bgfx::isValid (m_d->frameBuffer))
     {
-        m_d->oldWindowSize = {GS ()->width, GS ()->height};
+        PLOGD << "Create debug frame buffer";
 
-        if (bgfx::isValid (m_d->fieldModelInspectorFB))
-        {
-            bgfx::destroy (m_d->fieldModelInspectorFB);
-        }
+        m_d->frameBuffer = bgfx::createFrameBuffer (bgfx::BackbufferRatio::Equal,
+                                                    bgfx::TextureFormat::BGRA8);
 
-        const uint64_t tsFlags = 0
-                                 //| BGFX_SAMPLER_MIN_POINT
-                                 //| BGFX_SAMPLER_MAG_POINT
-                                 //| BGFX_SAMPLER_MIP_POINT
-                                 | BGFX_SAMPLER_U_CLAMP | BGFX_SAMPLER_V_CLAMP;
-
-        m_d->fieldModelInspectorTexture =
-            bgfx::createTexture2D (GS ()->width,
-                                   GS ()->height,
-                                   false,
-                                   0,
-                                   bgfx::TextureFormat::BGRA8,
-                                   BGFX_TEXTURE_RT | tsFlags);
-        m_d->fieldModelInspectorDepth = bgfx::createTexture2D (GS ()->width,
-                                                               GS ()->height,
-                                                               false,
-                                                               0,
-                                                               bgfx::TextureFormat::D24S8,
-                                                               BGFX_TEXTURE_RT | tsFlags);
-        array<bgfx::Attachment, 2> attachements;
-        attachements[0].init (m_d->fieldModelInspectorTexture);
-        attachements[1].init (m_d->fieldModelInspectorDepth);
-        m_d->fieldModelInspectorFB = bgfx::createFrameBuffer (2, &attachements[0], true);
+        bgfx::setViewFrameBuffer (m_d->viewId, m_d->frameBuffer);
     }
 
-    bgfx::setViewFrameBuffer (m_d->debugViewId, m_d->fieldModelInspectorFB);
-    bgfx::setViewRect (m_d->debugViewId, 0, 0, GS ()->width, GS ()->height);
+    bgfx::setViewClear (m_d->viewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0, 1.0f, 0);
+
+    bgfx::touch (m_d->viewId);
 
     draw.fire ();
 }
@@ -142,6 +109,9 @@ void debugHandle_t::shutdown ()
     PLOGD << "Shutdown ImGui";
     ImGui_ImplSDL3_Shutdown ();
     ImGui_Implbgfx_Shutdown ();
+
+    if (bgfx::isValid (m_d->frameBuffer))
+        bgfx::destroy (m_d->frameBuffer);
 
     ImGui::DestroyContext ();
 }
@@ -165,4 +135,9 @@ void debugHandle_t::showSampleWindow ()
         }
     }
     ImGui::End ();
+}
+
+bgfx::TextureHandle debugHandle_t::texture ()
+{
+    return bgfx::getTexture (m_d->frameBuffer);
 }

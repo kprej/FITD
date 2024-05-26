@@ -1,7 +1,10 @@
 #pragma once
 
-#include <SDL3/SDL.h>
+#include <bgfx/bgfx.h>
+
 #include <nano_signal_slot.hpp>
+
+#include <SDL3/SDL.h>
 
 #include <memory>
 
@@ -23,6 +26,8 @@ protected:
     void startFrame ();
     void endFrame ();
     void shutdown ();
+
+    bgfx::TextureHandle texture ();
 
 private:
     void showSampleWindow ();

@@ -2,6 +2,8 @@
 
 #include "shaders/background_fs.h.bin"
 #include "shaders/background_vs.h.bin"
+#include "shaders/combine_fs.h.bin"
+#include "shaders/combine_vs.h.bin"
 #include "shaders/flat_fs.h.bin"
 #include "shaders/flat_vs.h.bin"
 #include "shaders/font_fs.h.bin"
@@ -10,6 +12,8 @@
 #include "shaders/maskBackground_vs.h.bin"
 #include "shaders/noise_fs.h.bin"
 #include "shaders/noise_vs.h.bin"
+#include "shaders/post_fs.h.bin"
+#include "shaders/post_vs.h.bin"
 #include "shaders/ramp_fs.h.bin"
 #include "shaders/ramp_vs.h.bin"
 
@@ -24,6 +28,8 @@ namespace
 static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER (background_fs),
     BGFX_EMBEDDED_SHADER (background_vs),
+    BGFX_EMBEDDED_SHADER (combine_fs),
+    BGFX_EMBEDDED_SHADER (combine_vs),
     BGFX_EMBEDDED_SHADER (flat_fs),
     BGFX_EMBEDDED_SHADER (flat_vs),
     BGFX_EMBEDDED_SHADER (font_fs),
@@ -32,6 +38,8 @@ static const bgfx::EmbeddedShader s_embeddedShaders[] = {
     BGFX_EMBEDDED_SHADER (maskBackground_vs),
     BGFX_EMBEDDED_SHADER (noise_fs),
     BGFX_EMBEDDED_SHADER (noise_vs),
+    BGFX_EMBEDDED_SHADER (post_fs),
+    BGFX_EMBEDDED_SHADER (post_vs),
     BGFX_EMBEDDED_SHADER (ramp_fs),
     BGFX_EMBEDDED_SHADER (ramp_vs),
 

@@ -12,6 +12,16 @@ public:
 
     void init ();
 
+    void setViewPos (glm::vec2 const &vec_);
+    void setViewSize (glm::vec2 const &vec_);
+
+    void setFOV (float const &fov_);
+    void setPos (glm::vec3 const &vec_);
+    void lookAt (glm::vec3 const &vec_);
+
+    glm::vec2 viewPos () const;
+    glm::vec2 viewSize () const;
+
     glm::mat4 view ();
     glm::mat4 projection ();
 

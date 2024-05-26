@@ -13,6 +13,7 @@
 // https://github.com/ocornut/imgui
 
 #include "imgui_impl_bgfx.h"
+#include <cstdio>
 #include <imgui.h>
 
 // BGFX/BX
@@ -181,8 +182,10 @@ bool ImGui_Implbgfx_CreateDeviceObjects ()
 
 void ImGui_Implbgfx_InvalidateDeviceObjects ()
 {
-    bgfx::destroy (g_AttribLocationTex);
-    bgfx::destroy (g_ShaderHandle);
+    if (bgfx::isValid (g_AttribLocationTex))
+        bgfx::destroy (g_AttribLocationTex);
+    if (bgfx::isValid (g_ShaderHandle))
+        bgfx::destroy (g_ShaderHandle);
 
     if (isValid (g_FontTexture))
     {
@@ -192,9 +195,9 @@ void ImGui_Implbgfx_InvalidateDeviceObjects ()
     }
 }
 
-void ImGui_Implbgfx_Init (int view)
+void ImGui_Implbgfx_Init (uint8_t view)
 {
-    g_View = (uint8_t)(view & 0xff);
+    g_View = view;
 }
 
 void ImGui_Implbgfx_Shutdown ()

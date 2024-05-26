@@ -108,8 +108,12 @@ void osystem_t::init (int argc_, char *argv_[])
 
 bool osystem_t::run ()
 {
+    if (GS ()->handle.windowHidden ())
+        return true;
+
     GS ()->delta = SDL_GetTicks () - m_d->lastTime;
     m_d->lastTime = SDL_GetTicks ();
+
     if (!handleInput ())
         return false;
 
@@ -193,9 +197,13 @@ bool osystem_t::handleInput ()
         switch (event.type)
         {
         case SDL_EVENT_KEY_DOWN:
-            IN ()->anyKey = true;
             if (event.key.keysym.scancode == SDL_SCANCODE_GRAVE)
+            {
                 GS ()->debugMenuDisplayed = !GS ()->debugMenuDisplayed;
+                break;
+            }
+
+            IN ()->anyKey = true;
             break;
         case SDL_EVENT_QUIT:
             shutdown ();
@@ -247,6 +255,7 @@ void osystem_t::setupAudio ()
     }
     else
     {
+        Mix_MasterVolume (50);
         Mix_QuerySpec (&spec.freq, &spec.format, &spec.channels);
         SDL_Log ("Opened audio at %d Hz %d bit%s %s",
                  spec.freq,

@@ -10,11 +10,13 @@
 // examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-void ImGui_Implbgfx_Init(int view);
-void ImGui_Implbgfx_Shutdown();
-void ImGui_Implbgfx_NewFrame();
-void ImGui_Implbgfx_RenderDrawLists(struct ImDrawData* draw_data);
+#include <cstdint>
+
+void ImGui_Implbgfx_Init (uint8_t view);
+void ImGui_Implbgfx_Shutdown ();
+void ImGui_Implbgfx_NewFrame ();
+void ImGui_Implbgfx_RenderDrawLists (struct ImDrawData *draw_data);
 
 // Use if you want to reset your rendering device without losing ImGui state.
-void ImGui_Implbgfx_InvalidateDeviceObjects();
-bool ImGui_Implbgfx_CreateDeviceObjects();
+void ImGui_Implbgfx_InvalidateDeviceObjects ();
+bool ImGui_Implbgfx_CreateDeviceObjects ();

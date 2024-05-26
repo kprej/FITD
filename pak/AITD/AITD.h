@@ -33,7 +33,7 @@ public:
     enum class state_t
     {
         INTRO_TATOU,
-        INTRO_SCREEN,
+        TITLE_SCREEN,
     };
 
     ~aitd_t ();

@@ -1,8 +1,11 @@
 #pragma once
+#include "backgroundView.h"
 #include "bgfxHandle.h"
+#include "bodyView.h"
 #include "camera.h"
 #include "debugHandle.h"
 #include "font.h"
+#include "foregroundView.h"
 #include "game.h"
 #include "musicPlayer.h"
 #include "pakFile.h"
@@ -19,7 +22,7 @@
 struct gameState_t
 {
     gameId_t gameId;
-    bool debugMenuDisplayed;
+    bool debugMenuDisplayed = true;
     bool shutdown;
     std::vector<int16_t> CVars;
     std::map<std::string, pakFile_t> paks;
@@ -27,12 +30,19 @@ struct gameState_t
     std::unique_ptr<game_t> game;
     font_t font;
 
-    float width;
-    float height;
+    glm::tvec2<int> previousScreenSize;
+
+    int width;
+    int height;
+
+    bool screenSizeChanged;
 
     camera_t camera;
 
     bgfxHandle_t handle;
+    backgroundView_t backgroundView;
+    bodyView_t bodyView;
+    foregroundView_t foregroundView;
     debugHandle_t debug;
 
     uint64_t delta;

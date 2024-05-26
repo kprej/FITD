@@ -17,15 +17,15 @@ public:
     ~private_t () = default;
     private_t ()
         : up (0.f, 1.f, 0.f)
-        , eye (0.0f, 0.f, 0.0f)
+        , eye (0.0f, 0.f, 1.0f)
         , center (0.f, 0.f, 0.f)
         , fov (60.f)
-        , near (-10000.f)
-        , far (1000.f)
-        , left (1280)
-        , right (-1280)
-        , top (800)
-        , bottom (-800)
+        , near (0.1f)
+        , far (10000.f)
+        , right (320)
+        , bottom (200)
+        , viewPos (0, 0)
+        , viewSize (320, 200)
     {
     }
 
@@ -41,6 +41,9 @@ public:
     float right;
     float top;
     float bottom;
+
+    glm::vec2 viewPos;
+    glm::vec2 viewSize;
 };
 
 camera_t::~camera_t () = default;
@@ -55,18 +58,55 @@ void camera_t::init ()
     GS ()->debug.draw.connect<&camera_t::drawDebug> (this);
 }
 
+void camera_t::setViewPos (glm::vec2 const &vec_)
+{
+    m_d->viewPos = vec_;
+}
+
+void camera_t::setViewSize (glm::vec2 const &vec_)
+{
+    m_d->viewSize = vec_;
+}
+
+void camera_t::setFOV (float const &fov_)
+{
+    m_d->fov = fov_;
+}
+
+void camera_t::setPos (glm::vec3 const &pos_)
+{
+    m_d->eye = pos_;
+}
+
+void camera_t::lookAt (glm::vec3 const &pos_)
+{
+    m_d->center = pos_;
+}
+
 glm::mat4 camera_t::view ()
 {
     auto const look = glm::lookAt (m_d->eye, m_d->center, m_d->up);
+
     if (glm::isnan (look[0][0]))
         return glm::mat4 (1.0f);
 
     return look;
 }
 
+glm::vec2 camera_t::viewPos () const
+{
+    return m_d->viewPos;
+}
+
+glm::vec2 camera_t::viewSize () const
+{
+    return m_d->viewSize;
+}
+
 glm::mat4 camera_t::projection ()
 {
-    return glm::ortho (m_d->left, m_d->right, m_d->top, m_d->bottom, m_d->near, m_d->far);
+    return glm::perspective (
+        glm::radians (m_d->fov), m_d->right / m_d->bottom, m_d->near, m_d->far);
 }
 
 void camera_t::drawDebug ()
@@ -80,10 +120,11 @@ void camera_t::drawDebug ()
         ImGui::InputFloat ("Far", &m_d->far, 1.f, 1000.f);
         ImGui::InputFloat3 ("Eye", glm::value_ptr (m_d->eye));
         ImGui::InputFloat3 ("Center", glm::value_ptr (m_d->center));
-        ImGui::InputFloat ("left", &m_d->left, 1.f, 2000);
         ImGui::InputFloat ("right", &m_d->right, 1.f, 2000);
-        ImGui::InputFloat ("top", &m_d->top, 1.f, 2000);
         ImGui::InputFloat ("bottom", &m_d->bottom, 1.f, 2000);
+        ImGui::InputFloat2 ("View POS", glm::value_ptr (m_d->viewPos));
+        ImGui::InputFloat2 ("View Size", glm::value_ptr (m_d->viewSize));
+
         if (ImGui::TreeNode ("View Matrix"))
         {
             if (ImGui::BeginTable ("View", 4))

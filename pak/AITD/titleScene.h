@@ -1,21 +1,23 @@
 #pragma once
 
-#include "scene.h"
-
 #include <memory>
 
-class introScene_t
+class titleScene_t
 {
 public:
-    ~introScene_t ();
-    introScene_t ();
+    ~titleScene_t ();
+    titleScene_t ();
 
-    void enter ();
-    void run ();
-    void exit ();
-    void debug ();
+    bool run ();
 
 private:
+    void enter ();
+    void title ();
+    void dillo ();
+    void exit ();
+
+    void debug ();
+
     class private_t;
     std::shared_ptr<private_t> m_d;
 };

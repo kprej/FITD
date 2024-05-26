@@ -1,0 +1,15 @@
+// clang-format off
+$input v_texcoord0
+
+#include "bgfx_shader.sh"
+
+SAMPLER2D(s_combineTexture, 0);
+uniform vec4 s_color;
+
+void main()
+{
+    // clang-format on
+
+    gl_FragColor = texture2D(s_combineTexture, v_texcoord0);
+    gl_FragColor.a = s_color.a;
+}

@@ -1,12 +1,29 @@
+// clang-format off
 $input v_texcoord0
 
 #include "bgfx_shader.sh"
 
-highp USAMPLER2D(s_fontTexture, 0);
+highp USAMPLER2D (s_fontTexture, 0);
 uniform vec4 s_fontColor;
 
 void main()
 {
-    vec4 sampled = vec4(1.0, 1.0, 1.0, texelFetch(s_fontTexture, ivec2(v_texcoord0.x,v_texcoord0.y), 0).r);
-    gl_FragColor = s_fontColor * sampled;
+    // clang-format on
+
+    ivec2 texSize = textureSize (s_fontTexture, 0);
+
+    vec4 sampled = vec4 (
+        1.0,
+        1.0,
+        1.0,
+        texelFetch (
+            s_fontTexture, vec2 (v_texcoord0.x * texSize.x, v_texcoord0.y * texSize.y), 0)
+            .r);
+
+    vec4 outColor = sampled * s_fontColor;
+
+    gl_FragColor.r = outColor.r / 255;
+    gl_FragColor.g = outColor.g / 255;
+    gl_FragColor.b = outColor.b / 255;
+    gl_FragColor.a = outColor.a / 255;
 }

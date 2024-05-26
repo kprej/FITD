@@ -1,7 +1,6 @@
 #include "bgfx_shader.sh"
 
 highp USAMPLER2D(s_paletteTexture, 1);
-uniform vec4 s_polyColor;
 
 void main()
 {

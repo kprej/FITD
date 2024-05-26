@@ -57,6 +57,7 @@ FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(nanosigslot)
 FetchContent_MakeAvailable(plog)
 FetchContent_MakeAvailable(SDL)
+
 add_subdirectory( deps/imgui )
 
 FetchContent_MakeAvailable(SDL_mixer)
@@ -66,5 +67,4 @@ add_subdirectory(library/pakUtil)
 add_subdirectory(library/sound)
 
 add_subdirectory(adlibInTheDark)
-add_subdirectory(fontLoad)
 add_subdirectory(pak)

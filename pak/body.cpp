@@ -9,6 +9,7 @@
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/glm.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/matrix_decompose.hpp>
 #include <glm/gtx/quaternion.hpp>
 
 #include <imgui.h>
@@ -39,6 +40,10 @@ public:
         : position (0, 0, 0)
         , scale (1)
         , rotation (0, 0, 0)
+        , min (0, 0, 0)
+        , max (0, 0, 0)
+        , size (0, 0, 0)
+        , center (0, 0, 0)
     {
     }
 
@@ -62,6 +67,13 @@ public:
     glm::vec3 rotation;
     glm::vec3 position;
     float scale;
+
+    glm::vec3 min;
+    glm::vec3 max;
+    glm::vec3 size;
+    glm::vec3 center;
+
+    glm::mat4 boundingBox;
 };
 
 body_t::~body_t () = default;
@@ -92,10 +104,23 @@ void body_t::parseData (vector<byte> const &data_)
     m_d->vertices.resize (bodyBuffer.get<uint16_t> ());
     for (auto &vert : m_d->vertices)
     {
-        vert.x = bodyBuffer.get<int16_t> ();
-        vert.y = bodyBuffer.get<int16_t> ();
-        vert.z = bodyBuffer.get<int16_t> ();
+        vert.x = bodyBuffer.get<int16_t> () / 100;
+        vert.y = -1 * bodyBuffer.get<int16_t> () / 100;
+        vert.z = bodyBuffer.get<int16_t> () / 100;
         m_d->rawBody.push_back ({float (vert.x), float (vert.y), float (vert.z)});
+
+        if (vert.x < m_d->min.x)
+            m_d->min.x = vert.x;
+        if (vert.x > m_d->max.x)
+            m_d->max.x = vert.x;
+        if (vert.y < m_d->min.y)
+            m_d->min.y = vert.y;
+        if (vert.y > m_d->max.y)
+            m_d->max.y = vert.y;
+        if (vert.z < m_d->min.z)
+            m_d->min.z = vert.z;
+        if (vert.z > m_d->max.z)
+            m_d->max.z = vert.z;
     }
 
     if (m_d->flags & ANIM)
@@ -274,6 +299,14 @@ void body_t::parseData (vector<byte> const &data_)
         m_d->prims.push_back (prim);
     }
 
+    m_d->size = m_d->max - m_d->min;
+    m_d->center = (m_d->min + m_d->max) / 2.f;
+
+    PLOGD << m_d->center.x << " " << m_d->center.y;
+
+    m_d->boundingBox = glm::translate (glm::mat4 (1), m_d->center) *
+                       glm::scale (glm::mat4 (1), m_d->size);
+
     m_d->vBuffer = bgfx::createVertexBuffer (
         bgfx::makeRef (m_d->rawBody.data (), sizeof (rawBody_t) * m_d->rawBody.size ()),
         GS ()->handle.bodyVertexLayout ());
@@ -297,7 +330,7 @@ void body_t::rotateZ (float z_)
     m_d->rotation.z += z_;
 }
 
-void body_t::pos (float x_, float y_, float z_)
+void body_t::setPos (float x_, float y_, float z_)
 {
     m_d->position = glm::vec3 (x_, y_, z_);
 }
@@ -327,6 +360,16 @@ vector<primitive_t> const &body_t::primitives () const
     return m_d->prims;
 }
 
+glm::vec3 body_t::pos () const
+{
+    return m_d->position;
+}
+
+glm::vec3 body_t::center () const
+{
+    return m_d->center + m_d->position;
+}
+
 glm::mat4 body_t::transform () const
 {
     glm::mat4 mat (1.0f);
@@ -343,6 +386,11 @@ glm::mat4 body_t::transform () const
           glm::scale (mat, glm::vec3 {m_d->scale, m_d->scale, m_d->scale});
 
     return mat;
+}
+
+glm::mat4 body_t::boundingBox () const
+{
+    return m_d->boundingBox;
 }
 
 void body_t::debug ()

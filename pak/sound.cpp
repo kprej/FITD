@@ -13,10 +13,13 @@ public:
     ~private_t () { Mix_FreeChunk (chunk); }
     private_t ()
         : chunk (nullptr)
+        , currentChannel (-1)
     {
     }
 
     Mix_Chunk *chunk;
+
+    int currentChannel;
 };
 
 sound_t::~sound_t () = default;
@@ -32,7 +35,13 @@ void sound_t::init (vector<byte> const &data_)
     m_d->chunk = Mix_LoadWAV_IO (stream, true);
 }
 
-void sound_t::play () const
+int sound_t::play () const
 {
-    Mix_PlayChannel (-1, m_d->chunk, 0);
+    m_d->currentChannel = Mix_PlayChannel (-1, m_d->chunk, 0);
+    return m_d->currentChannel;
+}
+
+bool sound_t::isPlaying () const
+{
+    return Mix_Playing (m_d->currentChannel);
 }

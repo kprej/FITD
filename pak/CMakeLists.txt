@@ -20,27 +20,35 @@ set(AITD1
     AITD/AITD.cpp
     AITD/AITD.h
     AITD/samples.h
+    AITD/introScene.cpp
+    AITD/introScene.h
+    AITD/titleScene.cpp
+    AITD/titleScene.h
     )
 
 add_executable (pak
+    backgroundView.cpp
+    backgroundView.h
     bgfxHandle.cpp
     bgfxHandle.h
     bgfxShader.cpp
     bgfxShader.h
     body.cpp
     body.h
+    bodyView.cpp
+    bodyView.h
     camera.cpp
     camera.h
     debugHandle.cpp
     debugHandle.h
     font.cpp
     font.h
+    foregroundView.cpp
+    foregroundView.h
     game.cpp
     game.h
     imgui_impl_bgfx.cpp
     imgui_impl_bgfx.h
-    introScene.cpp
-    introScene.h
     main.cpp
     osystem.cpp
     osystem.h
