@@ -1,31 +1,25 @@
 #pragma once
 
+#include "view.h"
+
 #include <bgfx/bgfx.h>
 
 #include <memory>
-#include <vector>
 
-class foregroundView_t
+class foregroundView_t : public view_t
 {
 public:
     ~foregroundView_t ();
     foregroundView_t ();
 
-    void init ();
-
-    void startFrame ();
-
-    void update (std::vector<std::byte> const &texture_, int offset_);
-    void clear ();
-    void fill (uint8_t color_);
-
-    void render ();
-
-    void shutdown ();
-
-    bgfx::TextureHandle texture ();
+protected:
+    friend class bgfxHandle_t;
+    void init () final;
+    void startFrame () final;
 
 private:
+    void _shutdown () final;
+
     class private_t;
     std::unique_ptr<private_t> m_d;
 };

@@ -3,6 +3,7 @@
 
 #include "body.h"
 #include "osystem.h"
+#include "texture.h"
 
 #include <imgui.h>
 #include <plog/Log.h>
@@ -26,9 +27,12 @@ enum state_t
 class introScene_t::private_t
 {
 public:
-    ~private_t () = default;
+    ~private_t () {}
     private_t ()
         : tatou ()
+        , backgroundTexture (texture_t::FULLSCREEN)
+        , foregroundTexture (texture_t::FULLSCREEN)
+        , paletteTexture (texture_t::PALETTE)
         , state (ENTER)
         , lastState (ENTER)
         , sceneTime (0)
@@ -38,9 +42,15 @@ public:
     }
 
     body_t tatou;
+    texture_t backgroundTexture;
+    texture_t foregroundTexture;
+    texture_t paletteTexture;
+
     state_t state;
     state_t lastState;
+
     uint16_t sceneTime;
+
     float shrinkStep;
     float shrinkTimeMSec;
 };
@@ -52,7 +62,11 @@ introScene_t::~introScene_t ()
 introScene_t::introScene_t ()
     : m_d (make_shared<private_t> ())
 {
+    m_d->paletteTexture.update (
+        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
+
     m_d->tatou.parseData (GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
+    m_d->tatou.setPalette (m_d->paletteTexture);
 
     m_d->tatou.rotateY (-90);
     m_d->tatou.setPos (0.f, 0.f, 0.f);
@@ -66,6 +80,14 @@ introScene_t::introScene_t ()
     GS ()->camera.setPos ({0.0f, tCenter.y, 190.f});
     GS ()->camera.setViewSize ({864, 540});
     GS ()->camera.setViewPos ({208, 0});
+
+    m_d->backgroundTexture.update (
+        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
+
+    m_d->foregroundTexture.fill (3);
+
+    m_d->foregroundTexture.setPalette (m_d->paletteTexture);
+    m_d->backgroundTexture.setPalette (m_d->paletteTexture);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
@@ -99,12 +121,6 @@ void introScene_t::enter ()
 {
     GS ()->handle.fadeIn (1000);
 
-    GS ()->backgroundView.update (
-        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
-
-    GS ()->handle.setPalette (
-        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
-
     m_d->state = INFOGRAM;
 }
 
@@ -121,8 +137,8 @@ void introScene_t::infogram ()
         return;
     }
 
-    GS ()->backgroundView.blackout ({0, 0}, {320, 140});
-    GS ()->foregroundView.fill (3);
+    m_d->backgroundTexture.fill (0, {0, 0, 320, 140});
+
     m_d->state = DILLO;
     GS ()->samples.at (6).play ();
     m_d->sceneTime = 0;
@@ -131,11 +147,12 @@ void introScene_t::infogram ()
 void introScene_t::dillo ()
 {
     if (m_d->sceneTime < 50)
+    {
+        GS ()->handle.drawForeground (m_d->foregroundTexture);
         return;
+    }
 
-    GS ()->foregroundView.clear ();
-
-    GS ()->bodyView.drawBody (m_d->tatou);
+    GS ()->handle.drawBody (m_d->tatou);
 
     if (IN ()->anyKey)
     {
@@ -169,7 +186,7 @@ void introScene_t::exit ()
     }
 
     if (m_d->lastState == DILLO)
-        GS ()->bodyView.drawBody (m_d->tatou);
+        GS ()->handle.drawBody (m_d->tatou);
 }
 
 void introScene_t::debug ()

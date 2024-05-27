@@ -44,6 +44,7 @@ public:
         , max (0, 0, 0)
         , size (0, 0, 0)
         , center (0, 0, 0)
+        , palette (nullopt)
     {
     }
 
@@ -62,8 +63,6 @@ public:
     bgfx::IndexBufferHandle iBuffer;
     vector<primitive_t> prims;
 
-    vector<byte> palette;
-
     glm::vec3 rotation;
     glm::vec3 position;
     float scale;
@@ -74,12 +73,14 @@ public:
     glm::vec3 center;
 
     glm::mat4 boundingBox;
+
+    optional<texture_t> palette;
 };
 
 body_t::~body_t () = default;
 
 body_t::body_t ()
-    : m_d (make_shared<private_t> ())
+    : m_d (spimpl::make_impl<private_t> ())
 {
 }
 
@@ -343,6 +344,16 @@ void body_t::updateScale (float scale_)
 void body_t::setScale (float scale_)
 {
     m_d->scale = scale_;
+}
+
+void body_t::setPalette (texture_t const &texture_)
+{
+    m_d->palette = texture_;
+}
+
+optional<texture_t> const &body_t::palette () const
+{
+    return m_d->palette;
 }
 
 bgfx::VertexBufferHandle const &body_t::vertexBuffer () const

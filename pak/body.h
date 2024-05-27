@@ -1,10 +1,12 @@
 #pragma once
+#include "texture.h"
 #include "vertTypes.h"
 
 #include <bgfx/bgfx.h>
 #include <glm/mat4x4.hpp>
+#include <spimpl.h>
 
-#include <memory>
+#include <optional>
 #include <vector>
 
 class body_t
@@ -24,6 +26,10 @@ public:
     void updateScale (float scale_);
     void setScale (float scale_);
 
+    void setPalette (texture_t const &texture_);
+
+    std::optional<texture_t> const &palette () const;
+
     bgfx::VertexBufferHandle const &vertexBuffer () const;
     bgfx::IndexBufferHandle const &indexBuffer () const;
     std::vector<primitive_t> const &primitives () const;
@@ -41,5 +47,5 @@ public:
 
 private:
     class private_t;
-    std::shared_ptr<private_t> m_d;
+    spimpl::impl_ptr<private_t> m_d;
 };

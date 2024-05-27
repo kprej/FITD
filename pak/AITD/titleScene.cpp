@@ -80,6 +80,7 @@ bool titleScene_t::run ()
 
 void titleScene_t::enter ()
 {
+    /*
     GS ()->handle.fadeIn (500);
     GS ()->handle.setPalette (
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::PALETTE_GAME));
@@ -87,6 +88,7 @@ void titleScene_t::enter ()
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::FRAME_SPF), 0);
 
     m_d->state = TITLE;
+    */
 }
 
 void titleScene_t::title ()

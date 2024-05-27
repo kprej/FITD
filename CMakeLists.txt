@@ -50,6 +50,11 @@ FetchContent_Declare(nanosigslot GIT_REPOSITORY https://github.com/NoAvailableAl
   BUILD_COMMAND ""
     )
 
+FetchContent_Declare(spimpl GIT_REPOSITORY https://github.com/oliora/samples.git
+  CONFIGURE_COMMAND ""
+  BUILD_COMMAND ""
+    )
+
 FetchContent_MakeAvailable(bgfx)
 FetchContent_MakeAvailable(glm)
 FetchContent_MakeAvailable(iconfontheader)
@@ -57,6 +62,7 @@ FetchContent_MakeAvailable(magic_enum)
 FetchContent_MakeAvailable(nanosigslot)
 FetchContent_MakeAvailable(plog)
 FetchContent_MakeAvailable(SDL)
+FetchContent_MakeAvailable(spimpl)
 
 add_subdirectory( deps/imgui )
 

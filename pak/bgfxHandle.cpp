@@ -25,13 +25,24 @@ using namespace std;
 
 namespace
 {
-textureVert_t const TEXTURE_VERT[6] = {{-1.f, -1.f, 0.f, 0.f, 1.f},
-                                       {1.f, -1.f, 0.f, 1.f, 1.f},
-                                       {1.f, 1.f, 0.f, 1.f, 0.f},
+textureVert_t const FULLSCREEN_TEXTURE_VERT[6] = {{-1.f, -1.f, 0.f, 0.f, 1.f},
+                                                  {1.f, -1.f, 0.f, 1.f, 1.f},
+                                                  {1.f, 1.f, 0.f, 1.f, 0.f},
 
-                                       {-1.f, -1.f, 0.f, 0.f, 1.f},
-                                       {-1.f, 1.f, 0.f, 0.f, 0.f},
-                                       {1.f, 1.f, 0.f, 1.f, 0.f}};
+                                                  {-1.f, -1.f, 0.f, 0.f, 1.f},
+                                                  {-1.f, 1.f, 0.f, 0.f, 0.f},
+                                                  {1.f, 1.f, 0.f, 1.f, 0.f}};
+
+rawBody_t const BOUNDING_VERT[8] = {{-0.5, -0.5, -0.5},
+                                    {0.5, -0.5, -0.5},
+                                    {0.5, 0.5, -0.5},
+                                    {-0.5, 0.5, -0.5},
+                                    {-0.5, -0.5, 0.5},
+                                    {0.5, -0.5, 0.5},
+                                    {0.5, 0.5, 0.5},
+                                    {-0.5, 0.5, 0.5}};
+
+uint16_t const BOUNDING_INDEX[16] = {0, 1, 2, 3, 4, 5, 6, 7, 0, 4, 1, 5, 2, 6, 3, 7};
 } // namespace
 
 class bgfxHandle_t::private_t
@@ -51,6 +62,8 @@ public:
         , combineShader (BGFX_INVALID_HANDLE)
         , postShader (BGFX_INVALID_HANDLE)
         , fontShader (BGFX_INVALID_HANDLE)
+        , textureShader (BGFX_INVALID_HANDLE)
+        , bodyShader (BGFX_INVALID_HANDLE)
         , combineViewId (4)
         , combineFrameBuffer (BGFX_INVALID_HANDLE)
         , renderViewId (0)
@@ -68,11 +81,16 @@ public:
     bgfx::UniformHandle paletteTextureUniform;
     bgfx::UniformHandle fontColorUniform;
     bgfx::UniformHandle colorUniform;
+    bgfx::UniformHandle polyColorUniform;
+    bgfx::UniformHandle fullscreenTextureUniform;
 
-    bgfx::VertexBufferHandle textureVertexBuffer;
+    bgfx::VertexBufferHandle fullscreenTextureVertexBuffer;
+    bgfx::VertexBufferHandle boundingBoxVertexBuffer;
+
+    bgfx::IndexBufferHandle boundingBoxIndexBuffer;
 
     bgfx::VertexLayout textureLayout;
-    bgfx::VertexLayout bodyLayout;
+    bgfx::VertexLayout bodyVertexLayout;
 
     float fadeStep;
     int fadeTimeMSec;
@@ -82,11 +100,17 @@ public:
     bgfx::ProgramHandle combineShader;
     bgfx::ProgramHandle postShader;
     bgfx::ProgramHandle fontShader;
+    bgfx::ProgramHandle textureShader;
+    bgfx::ProgramHandle bodyShader;
 
     uint8_t combineViewId;
     bgfx::FrameBufferHandle combineFrameBuffer;
 
     uint8_t renderViewId;
+
+    backgroundView_t backgroundView;
+    bodyView_t bodyView;
+    foregroundView_t foregroundView;
 
     SDL_Window *window;
 
@@ -167,6 +191,8 @@ void bgfxHandle_t::init ()
 
     PLOGD << "Load shaders";
     m_d->combineShader = loadProgram ("combine");
+    m_d->textureShader = loadProgram ("texture");
+    m_d->bodyShader = loadProgram ("body");
     m_d->postShader = loadProgram ("post");
     m_d->fontShader = loadProgram ("font");
 }
@@ -215,9 +241,9 @@ void bgfxHandle_t::startFrame ()
     bgfx::touch (m_d->combineViewId);
     bgfx::touch (m_d->renderViewId);
 
-    GS ()->backgroundView.startFrame ();
-    GS ()->bodyView.startFrame ();
-    GS ()->foregroundView.startFrame ();
+    m_d->backgroundView.startFrame ();
+    m_d->bodyView.startFrame ();
+    m_d->foregroundView.startFrame ();
 
     if (GS ()->debugMenuDisplayed)
         GS ()->debug.startFrame ();
@@ -225,12 +251,9 @@ void bgfxHandle_t::startFrame ()
 
 void bgfxHandle_t::endFrame ()
 {
-    GS ()->backgroundView.render ();
-    GS ()->foregroundView.render ();
-
-    combine (GS ()->backgroundView.texture ());
-    combine (GS ()->bodyView.texture ());
-    combine (GS ()->foregroundView.texture ());
+    combine (m_d->backgroundView.texture ());
+    combine (m_d->bodyView.texture ());
+    combine (m_d->foregroundView.texture ());
 
     if (GS ()->debugMenuDisplayed)
     {
@@ -239,7 +262,7 @@ void bgfxHandle_t::endFrame ()
 
     processFade ();
 
-    bgfx::setVertexBuffer (0, m_d->textureVertexBuffer);
+    bgfx::setVertexBuffer (0, m_d->fullscreenTextureVertexBuffer);
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                     BGFX_STATE_BLEND_FUNC (BGFX_STATE_BLEND_SRC_ALPHA,
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA));
@@ -271,6 +294,56 @@ void bgfxHandle_t::addFontChar (vector<byte> const &texture_,
                            width_,
                            16,
                            bgfx::copy (texture_.data (), texture_.size ()));
+}
+
+void bgfxHandle_t::drawBackground (texture_t const &texture_)
+{
+    drawFullscreen (texture_, true);
+}
+
+void bgfxHandle_t::drawForeground (texture_t const &texture_)
+{
+    drawFullscreen (texture_, false);
+}
+
+void bgfxHandle_t::drawBody (body_t const &body_)
+{
+    for (auto const &p : body_.primitives ())
+    {
+        bgfx::setTransform (glm::value_ptr (body_.transform ()));
+
+        bgfx::setVertexBuffer (0, body_.vertexBuffer ());
+        bgfx::setIndexBuffer (body_.indexBuffer (), p.start, p.size);
+
+        bgfx::setTexture (1, m_d->paletteTextureUniform, body_.palette ()->handle ());
+
+        bgfx::setUniform (m_d->polyColorUniform, &p.color);
+
+        unsigned long long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                                   BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
+                                   BGFX_STATE_CULL_CW;
+
+        if (p.size == 2)
+            state |= BGFX_STATE_PT_LINES;
+
+        bgfx::setState (state);
+        bgfx::submit (m_d->bodyView.id (), m_d->bodyShader);
+    }
+
+    /*
+    GS ()->handle.applyPalette (1);
+    bgfx::setTransform (glm::value_ptr (body_.transform () * body_.boundingBox ()));
+    bgfx::setVertexBuffer (0, m_d->boundingBoxVertexBuffer);
+    bgfx::setIndexBuffer (m_d->boundingBoxIndexBuffer);
+    unsigned long long state = 0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
+                               BGFX_STATE_WRITE_Z | BGFX_STATE_DEPTH_TEST_LESS |
+                               BGFX_STATE_CULL_CW | BGFX_STATE_MSAA;
+
+    state |= BGFX_STATE_PT_LINES;
+
+    bgfx::setState (state);
+    bgfx::submit (m_d->bodyView.id (), m_d->bodyShader);
+    */
 }
 
 void bgfxHandle_t::fadeIn (int msec_)
@@ -321,7 +394,7 @@ void bgfxHandle_t::renderText (bgfx::TransientVertexBuffer const &buffer_)
 
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
 {
-    return m_d->bodyLayout;
+    return m_d->bodyVertexLayout;
 }
 
 bgfx::VertexLayout const &bgfxHandle_t::textureVertexLayout () const
@@ -329,23 +402,13 @@ bgfx::VertexLayout const &bgfxHandle_t::textureVertexLayout () const
     return m_d->textureLayout;
 }
 
-bgfx::VertexBufferHandle const &bgfxHandle_t::textureVertexBuffer () const
-{
-    return m_d->textureVertexBuffer;
-}
-
-void bgfxHandle_t::applyPalette (uint8_t id_) const
-{
-    bgfx::setTexture (id_, m_d->paletteTextureUniform, m_d->paletteTexture);
-}
-
 void bgfxHandle_t::shutdown ()
 {
     PLOGD << "Destroy shaders";
 
-    GS ()->backgroundView.shutdown ();
-    GS ()->bodyView.shutdown ();
-    GS ()->foregroundView.shutdown ();
+    m_d->backgroundView.shutdown ();
+    m_d->bodyView.shutdown ();
+    m_d->foregroundView.shutdown ();
     GS ()->debug.shutdown ();
 
     bgfx::destroy (m_d->fontShader);
@@ -353,7 +416,7 @@ void bgfxHandle_t::shutdown ()
 
     bgfx::destroy (m_d->combineFrameBuffer);
 
-    bgfx::destroy (m_d->textureVertexBuffer);
+    bgfx::destroy (m_d->fullscreenTextureVertexBuffer);
 
     bgfx::destroy (m_d->fontTexture);
     bgfx::destroy (m_d->paletteTexture);
@@ -369,6 +432,11 @@ void bgfxHandle_t::shutdown ()
     SDL_DestroyWindow (m_d->window);
 }
 
+bool bgfxHandle_t::windowHidden () const
+{
+    return (SDL_GetWindowFlags (m_d->window) & SDL_WINDOW_HIDDEN);
+}
+
 void bgfxHandle_t::createFontTexture (uint16_t height_, uint16_t width_)
 {
     m_d->fontTexture =
@@ -382,7 +450,7 @@ void bgfxHandle_t::createLayouts ()
         .add (bgfx::Attrib::TexCoord0, 2, bgfx::AttribType::Float)
         .end ();
 
-    m_d->bodyLayout.begin ()
+    m_d->bodyVertexLayout.begin ()
         .add (bgfx::Attrib::Position, 3, bgfx::AttribType::Float)
         .end ();
 }
@@ -396,8 +464,15 @@ void bgfxHandle_t::createTextureHandles ()
 
 void bgfxHandle_t::createBuffers ()
 {
-    m_d->textureVertexBuffer = bgfx::createVertexBuffer (
-        bgfx::makeRef (TEXTURE_VERT, sizeof (textureVert_t) * 6), m_d->textureLayout);
+    m_d->fullscreenTextureVertexBuffer = bgfx::createVertexBuffer (
+        bgfx::makeRef (FULLSCREEN_TEXTURE_VERT, sizeof (textureVert_t) * 6),
+        m_d->textureLayout);
+
+    m_d->boundingBoxVertexBuffer = bgfx::createVertexBuffer (
+        bgfx::makeRef (BOUNDING_VERT, sizeof (rawBody_t) * 8), m_d->bodyVertexLayout);
+
+    m_d->boundingBoxIndexBuffer =
+        bgfx::createIndexBuffer (bgfx::makeRef (BOUNDING_INDEX, sizeof (uint16_t) * 16));
 }
 
 void bgfxHandle_t::createUniforms ()
@@ -411,15 +486,19 @@ void bgfxHandle_t::createUniforms ()
     m_d->paletteTextureUniform =
         bgfx::createUniform ("s_paletteTexture", bgfx::UniformType::Sampler);
 
+    m_d->fullscreenTextureUniform =
+        bgfx::createUniform ("s_backgroundTexture", bgfx::UniformType::Sampler);
+
     m_d->fontColorUniform = bgfx::createUniform ("s_fontColor", bgfx::UniformType::Vec4);
     m_d->colorUniform = bgfx::createUniform ("s_color", bgfx::UniformType::Vec4);
+    m_d->polyColorUniform = bgfx::createUniform ("s_polyColor", bgfx::UniformType::Vec4);
 }
 
 void bgfxHandle_t::initViews ()
 {
-    GS ()->backgroundView.init ();
-    GS ()->bodyView.init ();
-    GS ()->foregroundView.init ();
+    m_d->backgroundView.init ();
+    m_d->bodyView.init ();
+    m_d->foregroundView.init ();
 }
 
 void bgfxHandle_t::debug ()
@@ -476,17 +555,29 @@ void bgfxHandle_t::processFade ()
     }
 }
 
-bool bgfxHandle_t::windowHidden () const
+void bgfxHandle_t::drawFullscreen (texture_t const &texture_, bool background_)
 {
-    return (SDL_GetWindowFlags (m_d->window) & SDL_WINDOW_HIDDEN);
+    bgfx::setVertexBuffer (0, m_d->fullscreenTextureVertexBuffer);
+
+    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |
+                    BGFX_STATE_BLEND_FUNC (BGFX_STATE_BLEND_SRC_ALPHA,
+                                           BGFX_STATE_BLEND_INV_SRC_ALPHA));
+
+    bgfx::setTexture (0, m_d->fullscreenTextureUniform, texture_.handle ());
+    bgfx::setTexture (1, m_d->paletteTextureUniform, texture_.palette ()->handle ());
+
+    bgfx::submit (background_ ? m_d->backgroundView.id () : m_d->foregroundView.id (),
+                  m_d->textureShader);
 }
 
 void bgfxHandle_t::combine (bgfx::TextureHandle const &handle_)
 {
-    bgfx::setVertexBuffer (0, m_d->textureVertexBuffer);
+    bgfx::setVertexBuffer (0, m_d->fullscreenTextureVertexBuffer);
+
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A |
                     BGFX_STATE_BLEND_FUNC (BGFX_STATE_BLEND_SRC_ALPHA,
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA));
+
     bgfx::setTexture (0, m_d->combineTextureUniform, handle_);
 
     bgfx::submit (m_d->combineViewId, m_d->combineShader);

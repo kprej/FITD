@@ -1,5 +1,8 @@
 #pragma once
 
+#include "body.h"
+#include "texture.h"
+
 #include <bgfx/bgfx.h>
 
 #include <nano_signal_slot.hpp>
@@ -33,6 +36,10 @@ public:
                       uint16_t xOffset_,
                       uint8_t width_);
 
+    void drawBackground (texture_t const &texture_);
+    void drawForeground (texture_t const &texture_);
+    void drawBody (body_t const &body_);
+
     void fadeIn (int msec_);
     void fadeOut (int msec_);
 
@@ -42,13 +49,10 @@ public:
 
     bgfx::VertexLayout const &bodyVertexLayout () const;
     bgfx::VertexLayout const &textureVertexLayout () const;
-    bgfx::VertexBufferHandle const &textureVertexBuffer () const;
-
-    void applyPalette (uint8_t id_) const;
 
     /// \name Signals
     /// @{
-    Nano::Signal<void ()> draw;
+    Nano::Signal<void ()> cleanup;
     /// @}
 
 protected:
@@ -72,6 +76,8 @@ private:
     void debug ();
 
     void processFade ();
+
+    void drawFullscreen (texture_t const &texture_, bool background_);
 
     void combine (bgfx::TextureHandle const &handle_);
 

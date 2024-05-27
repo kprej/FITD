@@ -54,11 +54,15 @@ add_executable (pak
     osystem.h
     sound.cpp
     sound.h
+    texture.cpp
+    texture.h
     types.cpp
     types.h
+    view.cpp
+    view.h
     ${AITD1}
     ${SHADERS}
     )
 
-target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD ${nanosigslot_SOURCE_DIR})
+target_include_directories(pak PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/AITD ${nanosigslot_SOURCE_DIR} ${spimpl_SOURCE_DIR})
 target_link_libraries(pak bgfx bx glm imgui magic_enum plog SDL3::SDL3 SDL3_mixer::SDL3_mixer sound zlib)

@@ -65,6 +65,7 @@ osystem_t::~osystem_t () = default;
 osystem_t::osystem_t ()
     : m_d (make_unique<private_t> ())
 {
+    GS ();
 }
 
 void osystem_t::init (int argc_, char *argv_[])
@@ -102,8 +103,6 @@ void osystem_t::init (int argc_, char *argv_[])
 
     loadPaks ();
     detectGame ();
-    GS ()->handle.startFrame ();
-    GS ()->handle.endFrame ();
 }
 
 bool osystem_t::run ()

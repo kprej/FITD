@@ -5,7 +5,6 @@
 #include "camera.h"
 #include "debugHandle.h"
 #include "font.h"
-#include "foregroundView.h"
 #include "game.h"
 #include "musicPlayer.h"
 #include "pakFile.h"
@@ -40,9 +39,6 @@ struct gameState_t
     camera_t camera;
 
     bgfxHandle_t handle;
-    backgroundView_t backgroundView;
-    bodyView_t bodyView;
-    foregroundView_t foregroundView;
     debugHandle_t debug;
 
     uint64_t delta;
