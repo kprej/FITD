@@ -35,6 +35,7 @@ public:
 
     void fill (uint8_t color_, glm::tvec4<uint16_t> rect_);
     void fill (uint8_t color_);
+
     void clear ();
 
     void setPalette (texture_t const &palette_);

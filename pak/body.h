@@ -41,11 +41,9 @@ public:
 
     glm::mat4 boundingBox () const;
 
-    void draw ();
-
+private:
     void debug ();
 
-private:
     class private_t;
     spimpl::impl_ptr<private_t> m_d;
 };

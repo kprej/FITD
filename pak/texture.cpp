@@ -1,5 +1,7 @@
 #include "texture.h"
 
+#include <plog/Log.h>
+
 using namespace std;
 
 class texture_t::private_t
@@ -89,19 +91,21 @@ void texture_t::update (std::vector<std::byte> const &data_,
 void texture_t::fill (uint8_t color_, glm::tvec4<uint16_t> rect_)
 {
     vector<byte> const color (rect_.z * rect_.w, byte (color_));
+
     bgfx::updateTexture2D (m_d->handle,
                            0,
                            0,
                            rect_.x,
-                           rect_.t,
-                           m_d->size.x,
-                           m_d->size.y,
+                           rect_.y,
+                           rect_.z,
+                           rect_.w,
                            bgfx::copy (color.data (), color.size ()));
 }
 
 void texture_t::fill (uint8_t color_)
 {
     vector<byte> const color (m_d->size.x * m_d->size.y, byte (color_));
+
     bgfx::updateTexture2D (m_d->handle,
                            0,
                            0,

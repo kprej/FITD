@@ -126,6 +126,7 @@ void introScene_t::enter ()
 
 void introScene_t::infogram ()
 {
+    GS ()->handle.drawBackground (m_d->backgroundTexture);
     if (GS ()->handle.fadeState () != fadeState_t::VISIBLE)
         return;
 
@@ -146,6 +147,7 @@ void introScene_t::infogram ()
 
 void introScene_t::dillo ()
 {
+    GS ()->handle.drawBackground (m_d->backgroundTexture);
     if (m_d->sceneTime < 50)
     {
         GS ()->handle.drawForeground (m_d->foregroundTexture);
@@ -187,6 +189,8 @@ void introScene_t::exit ()
 
     if (m_d->lastState == DILLO)
         GS ()->handle.drawBody (m_d->tatou);
+
+    GS ()->handle.drawBody (m_d->tatou);
 }
 
 void introScene_t::debug ()

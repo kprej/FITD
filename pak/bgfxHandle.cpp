@@ -2,6 +2,7 @@
 #include "backgroundView.h"
 #include "bgfxShader.h"
 #include "bodyView.h"
+#include "foregroundView.h"
 #include "osystem.h"
 #include "vertTypes.h"
 
@@ -20,7 +21,6 @@
 
 #include <plog/Log.h>
 
-#include <array>
 using namespace std;
 
 namespace
