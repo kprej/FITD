@@ -23,11 +23,12 @@ public:
 
     texture_t (glm::tvec2<uint16_t> const &size_);
     texture_t (preset_t preset_);
+    texture_t (preset_t preset_, std::vector<std::byte> const &data_);
 
     glm::tvec2<uint16_t> const &size () const;
 
     bgfx::TextureHandle const &handle () const;
-    std::optional<texture_t> const &palette () const;
+    uint8_t palette () const;
 
     void update (std::vector<std::byte> const &data_,
                  uint16_t offset_ = 0,
@@ -38,14 +39,19 @@ public:
 
     void clear ();
 
-    void setPalette (texture_t const &palette_);
+    void setPalette (uint8_t palette_);
 
     bool isValid () const;
-    bool hasPalette () const;
 
 private:
     void init ();
 
     class private_t;
     spimpl::impl_ptr<private_t> m_d;
+};
+
+struct transientTexture_t
+{
+    texture_t texture;
+    bgfx::TransientVertexBuffer buffer;
 };

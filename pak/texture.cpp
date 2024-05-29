@@ -7,33 +7,29 @@ using namespace std;
 class texture_t::private_t
 {
 public:
-    ~private_t ()
-    {
-        if (bgfx::isValid (handle))
-            bgfx::destroy (handle);
-    };
+    ~private_t () {};
 
     private_t ()
         : size ()
         , handle (BGFX_INVALID_HANDLE)
-        , palette (nullopt)
+        , palette (0)
     {
     }
     private_t (glm::tvec2<uint16_t> const &size_)
         : size (size_)
         , handle (BGFX_INVALID_HANDLE)
-        , palette (nullopt)
+        , palette (0)
     {
     }
 
     glm::tvec2<uint16_t> size;
     bgfx::TextureHandle handle;
-    optional<texture_t> palette;
+    uint8_t palette;
 };
 
 texture_t::~texture_t () = default;
 texture_t::texture_t ()
-    : m_d (nullptr)
+    : m_d (spimpl::make_impl<private_t> ())
 {
 }
 
@@ -58,6 +54,30 @@ texture_t::texture_t (preset_t preset_)
     init ();
 }
 
+texture_t::texture_t (preset_t preset_, vector<byte> const &data_)
+    : m_d (spimpl::make_impl<private_t> ())
+{
+    switch (preset_)
+    {
+    case FULLSCREEN:
+        m_d->size = {320, 200};
+        break;
+    case PALETTE:
+        m_d->size = {3, 256};
+    };
+
+    init ();
+
+    bgfx::updateTexture2D (m_d->handle,
+                           0,
+                           0,
+                           0,
+                           0,
+                           m_d->size.x,
+                           m_d->size.y,
+                           bgfx::copy (data_.data (), data_.size ()));
+}
+
 glm::tvec2<uint16_t> const &texture_t::size () const
 {
     return m_d->size;
@@ -68,7 +88,7 @@ bgfx::TextureHandle const &texture_t::handle () const
     return m_d->handle;
 }
 
-optional<texture_t> const &texture_t::palette () const
+uint8_t texture_t::palette () const
 {
     return m_d->palette;
 }
@@ -116,7 +136,7 @@ void texture_t::fill (uint8_t color_)
                            bgfx::copy (color.data (), color.size ()));
 }
 
-void texture_t::setPalette (texture_t const &palette_)
+void texture_t::setPalette (uint8_t palette_)
 {
     m_d->palette = palette_;
 }
@@ -124,11 +144,6 @@ void texture_t::setPalette (texture_t const &palette_)
 bool texture_t::isValid () const
 {
     return (bool)m_d;
-}
-
-bool texture_t::hasPalette () const
-{
-    return m_d->palette.has_value ();
 }
 
 void texture_t::init ()

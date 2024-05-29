@@ -1,5 +1,6 @@
 #include "AITD/introScene.h"
 #include "AITD/AITD.h"
+#include "AITD/resources.h"
 
 #include "body.h"
 #include "osystem.h"
@@ -32,7 +33,6 @@ public:
         : tatou ()
         , backgroundTexture (texture_t::FULLSCREEN)
         , foregroundTexture (texture_t::FULLSCREEN)
-        , paletteTexture (texture_t::PALETTE)
         , state (ENTER)
         , lastState (ENTER)
         , sceneTime (0)
@@ -44,7 +44,6 @@ public:
     body_t tatou;
     texture_t backgroundTexture;
     texture_t foregroundTexture;
-    texture_t paletteTexture;
 
     state_t state;
     state_t lastState;
@@ -62,11 +61,11 @@ introScene_t::~introScene_t ()
 introScene_t::introScene_t ()
     : m_d (make_shared<private_t> ())
 {
-    m_d->paletteTexture.update (
-        GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
+    GS ()->palettes[resources_t::PAL_TATOU] = texture_t (
+        texture_t::PALETTE, GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_PAL));
 
     m_d->tatou.parseData (GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_3DO));
-    m_d->tatou.setPalette (m_d->paletteTexture);
+    m_d->tatou.setPalette (resources_t::PAL_TATOU);
 
     m_d->tatou.rotateY (-90);
     m_d->tatou.setPos (0.f, 0.f, 0.f);
@@ -86,8 +85,8 @@ introScene_t::introScene_t ()
 
     m_d->foregroundTexture.fill (3);
 
-    m_d->foregroundTexture.setPalette (m_d->paletteTexture);
-    m_d->backgroundTexture.setPalette (m_d->paletteTexture);
+    m_d->foregroundTexture.setPalette (resources_t::PAL_TATOU);
+    m_d->backgroundTexture.setPalette (resources_t::PAL_TATOU);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
@@ -108,10 +107,10 @@ bool introScene_t::run ()
         dillo ();
         break;
     case EXIT:
-        exit ();
+        // exit ();
         break;
     case FINISHED:
-        return false;
+        // return false;
     }
 
     return true;
@@ -126,10 +125,11 @@ void introScene_t::enter ()
 
 void introScene_t::infogram ()
 {
-    GS ()->handle.drawBackground (m_d->backgroundTexture);
-    if (GS ()->handle.fadeState () != fadeState_t::VISIBLE)
-        return;
+    GS ()->handle.drawFullscreenBackground (m_d->backgroundTexture);
+    // if (GS ()->handle.fadeState () != fadeState_t::VISIBLE)
+    return;
 
+    /*
     if (IN ()->anyKey)
     {
         GS ()->handle.fadeOut (1000);
@@ -137,6 +137,7 @@ void introScene_t::infogram ()
         m_d->lastState = INFOGRAM;
         return;
     }
+    */
 
     m_d->backgroundTexture.fill (0, {0, 0, 320, 140});
 
@@ -147,10 +148,10 @@ void introScene_t::infogram ()
 
 void introScene_t::dillo ()
 {
-    GS ()->handle.drawBackground (m_d->backgroundTexture);
+    GS ()->handle.drawFullscreenBackground (m_d->backgroundTexture);
     if (m_d->sceneTime < 50)
     {
-        GS ()->handle.drawForeground (m_d->foregroundTexture);
+        GS ()->handle.drawFullscreenForeground (m_d->foregroundTexture);
         return;
     }
 
@@ -158,10 +159,10 @@ void introScene_t::dillo ()
 
     if (IN ()->anyKey)
     {
-        GS ()->handle.fadeOut (1000);
-        m_d->state = EXIT;
-        m_d->lastState = DILLO;
-        return;
+        // GS ()->handle.fadeOut (1000);
+        // m_d->state = EXIT;
+        ////m_d->lastState = DILLO;
+        ////return;
     }
 
     m_d->tatou.rotateY (-0.2);
@@ -171,9 +172,9 @@ void introScene_t::dillo ()
 
     if (!GS ()->samples.at (6).isPlaying ())
     {
-        GS ()->handle.fadeOut (1000);
-        m_d->state = EXIT;
-        m_d->lastState = DILLO;
+        // GS ()->handle.fadeOut (1000);
+        //  m_d->state = EXIT;
+        //  m_d->lastState = DILLO;
     }
 }
 
@@ -190,7 +191,7 @@ void introScene_t::exit ()
     if (m_d->lastState == DILLO)
         GS ()->handle.drawBody (m_d->tatou);
 
-    GS ()->handle.drawBody (m_d->tatou);
+    GS ()->handle.drawFullscreenBackground (m_d->backgroundTexture);
 }
 
 void introScene_t::debug ()

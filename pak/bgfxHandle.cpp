@@ -25,13 +25,13 @@ using namespace std;
 
 namespace
 {
-textureVert_t const FULLSCREEN_TEXTURE_VERT[6] = {{-1.f, -1.f, 0.f, 0.f, 1.f},
-                                                  {1.f, -1.f, 0.f, 1.f, 1.f},
-                                                  {1.f, 1.f, 0.f, 1.f, 0.f},
+textureVert_t const FULLSCREEN_TEXTURE_VERT[6] = {{0, 0, 0.f, 0.f, 0.f},
+                                                  {320.0f, 0.f, 0.f, 1.f, 0.f},
+                                                  {320.0f, 200.0f, 0.f, 1.f, 1.f},
 
-                                                  {-1.f, -1.f, 0.f, 0.f, 1.f},
-                                                  {-1.f, 1.f, 0.f, 0.f, 0.f},
-                                                  {1.f, 1.f, 0.f, 1.f, 0.f}};
+                                                  {0.f, 0.f, 0.f, 0.f, 0.f},
+                                                  {0.f, 200.f, 0.f, 0.f, 1.f},
+                                                  {320.f, 200.f, 0.f, 1.f, 1.f}};
 
 rawBody_t const BOUNDING_VERT[8] = {{-0.5, -0.5, -0.5},
                                     {0.5, -0.5, -0.5},
@@ -296,14 +296,26 @@ void bgfxHandle_t::addFontChar (vector<byte> const &texture_,
                            bgfx::copy (texture_.data (), texture_.size ()));
 }
 
-void bgfxHandle_t::drawBackground (texture_t const &texture_)
+void bgfxHandle_t::drawFullscreenBackground (texture_t const &texture_)
 {
     drawFullscreen (texture_, true);
 }
 
-void bgfxHandle_t::drawForeground (texture_t const &texture_)
+void bgfxHandle_t::drawToBackground (bgfx::TransientVertexBuffer const &buffer_,
+                                     texture_t const &texture_)
+{
+    drawToScreen (buffer_, texture_, true);
+}
+
+void bgfxHandle_t::drawFullscreenForeground (texture_t const &texture_)
 {
     drawFullscreen (texture_, false);
+}
+
+void bgfxHandle_t::drawToForeground (bgfx::TransientVertexBuffer const &buffer_,
+                                     texture_t const &texture_)
+{
+    drawToScreen (buffer_, texture_, false);
 }
 
 void bgfxHandle_t::drawBody (body_t const &body_)
@@ -315,7 +327,9 @@ void bgfxHandle_t::drawBody (body_t const &body_)
         bgfx::setVertexBuffer (0, body_.vertexBuffer ());
         bgfx::setIndexBuffer (body_.indexBuffer (), p.start, p.size);
 
-        bgfx::setTexture (1, m_d->paletteTextureUniform, body_.palette ()->handle ());
+        bgfx::setTexture (1,
+                          m_d->paletteTextureUniform,
+                          GS ()->palettes.at (body_.palette ()).handle ());
 
         bgfx::setUniform (m_d->polyColorUniform, &p.color);
 
@@ -377,7 +391,6 @@ fadeState_t bgfxHandle_t::fadeState () const
 
 void bgfxHandle_t::renderText (bgfx::TransientVertexBuffer const &buffer_)
 {
-    return;
     bgfx::setVertexBuffer (0, &buffer_);
 
     bgfx::setTexture (0, m_d->fontTextureUniform, m_d->fontTexture);
@@ -389,7 +402,7 @@ void bgfxHandle_t::renderText (bgfx::TransientVertexBuffer const &buffer_)
                     BGFX_STATE_BLEND_FUNC (BGFX_STATE_BLEND_SRC_ALPHA,
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA));
 
-    // bgfx::submit (m_d->backgroundViewId, m_d->fontShader);
+    bgfx::submit (m_d->foregroundView.id (), m_d->fontShader);
 }
 
 bgfx::VertexLayout const &bgfxHandle_t::bodyVertexLayout () const
@@ -411,17 +424,31 @@ void bgfxHandle_t::shutdown ()
     m_d->foregroundView.shutdown ();
     GS ()->debug.shutdown ();
 
+    for (auto const &tex : GS ()->textures)
+        bgfx::destroy (tex.second.handle ());
+
+    for (auto const &tex : GS ()->palettes)
+        bgfx::destroy (tex.second.handle ());
+
+    bgfx::destroy (m_d->bodyShader);
+    bgfx::destroy (m_d->postShader);
+    bgfx::destroy (m_d->textureShader);
     bgfx::destroy (m_d->fontShader);
     bgfx::destroy (m_d->combineShader);
 
     bgfx::destroy (m_d->combineFrameBuffer);
 
     bgfx::destroy (m_d->fullscreenTextureVertexBuffer);
+    bgfx::destroy (m_d->boundingBoxVertexBuffer);
+    bgfx::destroy (m_d->boundingBoxIndexBuffer);
 
     bgfx::destroy (m_d->fontTexture);
     bgfx::destroy (m_d->paletteTexture);
 
+    bgfx::destroy (m_d->colorUniform);
+    bgfx::destroy (m_d->polyColorUniform);
     bgfx::destroy (m_d->fontTextureUniform);
+    bgfx::destroy (m_d->fullscreenTextureUniform);
     bgfx::destroy (m_d->paletteTextureUniform);
     bgfx::destroy (m_d->fontColorUniform);
     bgfx::destroy (m_d->combineTextureUniform);
@@ -564,7 +591,28 @@ void bgfxHandle_t::drawFullscreen (texture_t const &texture_, bool background_)
                                            BGFX_STATE_BLEND_INV_SRC_ALPHA));
 
     bgfx::setTexture (0, m_d->fullscreenTextureUniform, texture_.handle ());
-    bgfx::setTexture (1, m_d->paletteTextureUniform, texture_.palette ()->handle ());
+    bgfx::setTexture (1,
+                      m_d->paletteTextureUniform,
+                      GS ()->palettes.at (texture_.palette ()).handle ());
+
+    bgfx::submit (background_ ? m_d->backgroundView.id () : m_d->foregroundView.id (),
+                  m_d->textureShader);
+}
+
+void bgfxHandle_t::drawToScreen (bgfx::TransientVertexBuffer const &buffer_,
+                                 texture_t const &texture_,
+                                 bool background_)
+{
+    bgfx::setVertexBuffer (0, &buffer_);
+
+    bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |
+                    BGFX_STATE_BLEND_FUNC (BGFX_STATE_BLEND_SRC_ALPHA,
+                                           BGFX_STATE_BLEND_INV_SRC_ALPHA));
+
+    bgfx::setTexture (0, m_d->fullscreenTextureUniform, texture_.handle ());
+    bgfx::setTexture (1,
+                      m_d->paletteTextureUniform,
+                      GS ()->palettes.at (texture_.palette ()).handle ());
 
     bgfx::submit (background_ ? m_d->backgroundView.id () : m_d->foregroundView.id (),
                   m_d->textureShader);

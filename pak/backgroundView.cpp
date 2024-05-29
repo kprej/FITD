@@ -3,6 +3,11 @@
 
 #include <bgfx/bgfx.h>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/ext/matrix_transform.hpp>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <plog/Log.h>
 
 using namespace std;
@@ -39,6 +44,9 @@ void backgroundView_t::startFrame ()
             GS ()->width, GS ()->height, bgfx::TextureFormat::BGRA8);
 
         bgfx::setViewFrameBuffer (m_viewId, m_frameBuffer);
+        auto const ortho = glm::ortho (0.0f, 320.f, 200.f, 0.0f, -100.1f, 1000.0f);
+
+        bgfx::setViewTransform (m_viewId, NULL, glm::value_ptr (ortho));
         bgfx::setViewRect (m_viewId, 0, 0, GS ()->width, GS ()->height);
     }
 

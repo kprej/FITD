@@ -1,8 +1,10 @@
 #include "AITD/AITD.h"
 #include "AITD/LISTMUS.h"
 #include "AITD/introScene.h"
+#include "AITD/resources.h"
 #include "AITD/titleScene.h"
 
+#include "frame.h"
 #include "osystem.h"
 #include "pakFile.h"
 #include "sound.h"
@@ -29,6 +31,8 @@ public:
     unique_ptr<introScene_t> intro;
     unique_ptr<titleScene_t> title;
 
+    frame_t frame;
+
     uint16_t deferStartTime;
 };
 
@@ -51,11 +55,18 @@ void aitd_t::_init ()
         GS ()->samples.push_back (sample);
     }
 
+    GS ()->palettes.insert (
+        {resources_t::PAL_GAME,
+         texture_t (texture_t::PALETTE,
+                    GS ()->paks.at ("ITD_RESS").pak (ress_t::PALETTE_GAME).data ())});
+
     MP ()->setMusicPak (GS ()->paks.at ("LISTMUS"));
     MP ()->setTrackNames (aitd::TRACK_NAMES);
 
     GS ()->handle.createFontTexture (16, 1797);
     GS ()->font.init (GS ()->paks.at ("ITD_RESS").pak (ress_t::ITDFONT), 1797);
+
+    m_d->frame.setTexture (GS ()->paks.at ("ITD_RESS").pak (ress_t::FRAME_SPF).data ());
 
     m_d->intro = make_unique<introScene_t> ();
 }
@@ -68,6 +79,7 @@ void aitd_t::_start ()
         return;
     }
 
+    m_d->frame.render ({0, 0, 0, 0});
     switch (m_d->state)
     {
     case state_t::INTRO_TATOU:

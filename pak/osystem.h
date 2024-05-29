@@ -16,6 +16,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 struct gameState_t
@@ -25,6 +26,9 @@ struct gameState_t
     bool shutdown;
     std::vector<int16_t> CVars;
     std::map<std::string, pakFile_t> paks;
+
+    std::unordered_map<uint8_t, texture_t> textures;
+    std::unordered_map<uint8_t, texture_t> palettes;
 
     std::unique_ptr<game_t> game;
     font_t font;

@@ -36,9 +36,15 @@ public:
                       uint16_t xOffset_,
                       uint8_t width_);
 
-    void drawBackground (texture_t const &texture_);
-    void drawForeground (texture_t const &texture_);
+    void drawFullscreenBackground (texture_t const &texture_);
+    void drawFullscreenForeground (texture_t const &texture_);
+
     void drawBody (body_t const &body_);
+
+    void drawToBackground (bgfx::TransientVertexBuffer const &buffer_,
+                           texture_t const &texture_);
+    void drawToForeground (bgfx::TransientVertexBuffer const &buffer_,
+                           texture_t const &texture_);
 
     void fadeIn (int msec_);
     void fadeOut (int msec_);
@@ -78,6 +84,9 @@ private:
     void processFade ();
 
     void drawFullscreen (texture_t const &texture_, bool background_);
+    void drawToScreen (bgfx::TransientVertexBuffer const &buffer_,
+                       texture_t const &texture_,
+                       bool background_);
 
     void combine (bgfx::TextureHandle const &handle_);
 

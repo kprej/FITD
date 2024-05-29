@@ -44,7 +44,7 @@ public:
         , max (0, 0, 0)
         , size (0, 0, 0)
         , center (0, 0, 0)
-        , palette (nullopt)
+        , palette (0)
     {
     }
 
@@ -74,7 +74,7 @@ public:
 
     glm::mat4 boundingBox;
 
-    optional<texture_t> palette;
+    uint8_t palette;
 };
 
 body_t::~body_t () = default;
@@ -346,12 +346,12 @@ void body_t::setScale (float scale_)
     m_d->scale = scale_;
 }
 
-void body_t::setPalette (texture_t const &texture_)
+void body_t::setPalette (uint8_t palette_)
 {
-    m_d->palette = texture_;
+    m_d->palette = palette_;
 }
 
-optional<texture_t> const &body_t::palette () const
+uint8_t body_t::palette () const
 {
     return m_d->palette;
 }

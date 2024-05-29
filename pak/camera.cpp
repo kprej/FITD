@@ -111,8 +111,6 @@ glm::mat4 camera_t::projection ()
 
 void camera_t::drawDebug ()
 {
-    float orthoProj[16];
-
     if (ImGui::Begin ("Camera"))
     {
         ImGui::SliderFloat ("FOV", &m_d->fov, 0.f, 180.f);

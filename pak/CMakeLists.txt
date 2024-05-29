@@ -22,6 +22,7 @@ set(AITD1
     AITD/samples.h
     AITD/introScene.cpp
     AITD/introScene.h
+    AITD/resources.h
     AITD/titleScene.cpp
     AITD/titleScene.h
     )
@@ -45,6 +46,8 @@ add_executable (pak
     font.h
     foregroundView.cpp
     foregroundView.h
+    frame.cpp
+    frame.h
     game.cpp
     game.h
     imgui_impl_bgfx.cpp
