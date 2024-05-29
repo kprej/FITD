@@ -80,13 +80,14 @@ introScene_t::introScene_t ()
     GS ()->camera.setViewSize ({864, 540});
     GS ()->camera.setViewPos ({208, 0});
 
-    m_d->backgroundTexture.update (
+    GS ()->textures[resources_t::TEX_TATOU] = texture_t (texture_t::FULLSCREEN);
+    GS ()->textures[resources_t::TEX_TATOU].update (
         GS ()->paks.at ("ITD_RESS").data (aitd_t::ress_t::TATOU_MCG), 770);
 
     m_d->foregroundTexture.fill (3);
 
     m_d->foregroundTexture.setPalette (resources_t::PAL_TATOU);
-    m_d->backgroundTexture.setPalette (resources_t::PAL_TATOU);
+    GS ()->textures[resources_t::TEX_TATOU].setPalette (resources_t::PAL_TATOU);
 
     GS ()->debug.draw.connect<&introScene_t::debug> (this);
 }
@@ -125,7 +126,7 @@ void introScene_t::enter ()
 
 void introScene_t::infogram ()
 {
-    GS ()->handle.drawFullscreenBackground (m_d->backgroundTexture);
+    GS ()->handle.drawFullscreenBackground (GS ()->textures.at (resources_t::TEX_TATOU));
     // if (GS ()->handle.fadeState () != fadeState_t::VISIBLE)
     return;
 

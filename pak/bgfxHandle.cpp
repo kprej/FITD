@@ -25,13 +25,13 @@ using namespace std;
 
 namespace
 {
-textureVert_t const FULLSCREEN_TEXTURE_VERT[6] = {{0, 0, 0.f, 0.f, 0.f},
-                                                  {320.0f, 0.f, 0.f, 1.f, 0.f},
-                                                  {320.0f, 200.0f, 0.f, 1.f, 1.f},
+textureVert_t const FULLSCREEN_TEXTURE_VERT[6] = {{0, 0, 0.f, 1.f, 0.f},
+                                                  {320.0f, 0.f, 0.f, 1.f, 1.f},
+                                                  {320.0f, 200.0f, 0.f, 0.f, 1.f},
 
-                                                  {0.f, 0.f, 0.f, 0.f, 0.f},
-                                                  {0.f, 200.f, 0.f, 0.f, 1.f},
-                                                  {320.f, 200.f, 0.f, 1.f, 1.f}};
+                                                  {0.f, 0.f, 0.f, 1.f, 0.f},
+                                                  {0.f, 200.f, 0.f, 0.f, 0.f},
+                                                  {320.f, 200.f, 0.f, 0.f, 1.f}};
 
 rawBody_t const BOUNDING_VERT[8] = {{-0.5, -0.5, -0.5},
                                     {0.5, -0.5, -0.5},
@@ -231,6 +231,10 @@ void bgfxHandle_t::startFrame ()
 
     bgfx::setViewFrameBuffer (m_d->renderViewId,
                               BGFX_INVALID_HANDLE); // bind the backbuffer
+    auto const ortho = glm::ortho (0.0f, 320.f, 0.f, 200.0f, -100.1f, 1000.0f);
+
+    bgfx::setViewTransform (m_d->combineViewId, NULL, glm::value_ptr (ortho));
+    bgfx::setViewTransform (m_d->renderViewId, NULL, glm::value_ptr (ortho));
 
     bgfx::setViewClear (
         m_d->combineViewId, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 255, 1.0f, 0);
@@ -584,6 +588,9 @@ void bgfxHandle_t::processFade ()
 
 void bgfxHandle_t::drawFullscreen (texture_t const &texture_, bool background_)
 {
+    if (!background_)
+        return;
+
     bgfx::setVertexBuffer (0, m_d->fullscreenTextureVertexBuffer);
 
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |
@@ -603,6 +610,9 @@ void bgfxHandle_t::drawToScreen (bgfx::TransientVertexBuffer const &buffer_,
                                  texture_t const &texture_,
                                  bool background_)
 {
+    if (!background_)
+        return;
+
     bgfx::setVertexBuffer (0, &buffer_);
 
     bgfx::setState (0 | BGFX_STATE_WRITE_RGB | BGFX_STATE_WRITE_A | BGFX_STATE_WRITE_Z |

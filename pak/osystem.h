@@ -22,7 +22,7 @@
 struct gameState_t
 {
     gameId_t gameId;
-    bool debugMenuDisplayed = true;
+    bool debugMenuDisplayed = false;
     bool shutdown;
     std::vector<int16_t> CVars;
     std::map<std::string, pakFile_t> paks;

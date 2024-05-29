@@ -73,7 +73,7 @@ void frame_t::render (glm::tvec4<uint16_t> const &rect_)
 {
     bgfx::TransientVertexBuffer transientVertex;
     bgfx::allocTransientVertexBuffer (
-        &transientVertex, 4, GS ()->handle.textureVertexLayout ());
+        &transientVertex, 6, GS ()->handle.textureVertexLayout ());
 
     textureVert_t *verts = (textureVert_t *)transientVertex.data;
 

@@ -44,7 +44,7 @@ void backgroundView_t::startFrame ()
             GS ()->width, GS ()->height, bgfx::TextureFormat::BGRA8);
 
         bgfx::setViewFrameBuffer (m_viewId, m_frameBuffer);
-        auto const ortho = glm::ortho (0.0f, 320.f, 200.f, 0.0f, -100.1f, 1000.0f);
+        auto const ortho = glm::ortho (0.0f, 320.f, 0.f, 200.0f, -1.f, 1.f);
 
         bgfx::setViewTransform (m_viewId, NULL, glm::value_ptr (ortho));
         bgfx::setViewRect (m_viewId, 0, 0, GS ()->width, GS ()->height);
